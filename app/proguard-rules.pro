@@ -1,10 +1,10 @@
 # Add project specific ProGuard rules here.
 # Keep app classes
--keep class com.imi.smartedge.sidebar.panel.** { *; }
--keepclassmembers class com.imi.smartedge.sidebar.panel.** { *; }
+-keep class eu.astancu.sideflow.** { *; }
+-keepclassmembers class eu.astancu.sideflow.** { *; }
 
 # Keep ViewBinding
--keep class com.imi.smartedge.sidebar.panel.databinding.** { *; }
+-keep class eu.astancu.sideflow.databinding.** { *; }
 
 # Skydoves ColorPickerView
 -keep class com.skydoves.colorpickerview.** { *; }

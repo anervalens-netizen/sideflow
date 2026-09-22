@@ -1,13 +1,13 @@
 <resources>
-    <string name="app_name">Smart Edge</string>
+    <string name="app_name">SideFlow</string>
     <string name="app_picker_title">Choose Apps</string>
-    <string name="settings_title">SidePanel Settings</string>
+    <string name="settings_title">SideFlow Settings</string>
     <string name="shortcut_toggle_short">Sidebar</string>
     <string name="shortcut_toggle_long">Toggle Sidebar</string>
     <string name="shortcut_screenshot">Take Screenshot</string>
     <string name="shortcut_hub">Open Productivity Hub</string>
-    <string name="panel_running">Smart Edge is active</string>
-    <string name="panel_notification_channel">Smart Edge Service</string>
+    <string name="panel_running">SideFlow is active</string>
+    <string name="panel_notification_channel">SideFlow Service</string>
     <string name="panel_notification_desc">Keeps the side panel available over all apps</string>
     <string name="start_panel">Start Panel</string>
     <string name="stop_panel">Stop Panel</string>
@@ -103,7 +103,7 @@
     <string name="main_test_sidebar">Test Sidebar Now</string>
     
     <string name="alert_battery_title">Improve Stability</string>
-    <string name="alert_battery_desc">Exclude SidePanel from battery optimization to prevent the system from killing it in the background.</string>
+    <string name="alert_battery_desc">Exclude SideFlow from battery optimization to prevent the system from killing it in the background.</string>
     <string name="alert_battery_btn">Allow Background Use</string>
     
     <string name="alert_freeform_title">Multitasking Mode</string>

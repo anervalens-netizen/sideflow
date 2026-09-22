@@ -16,7 +16,7 @@
             android:layout_height="?attr/actionBarSize"
             app:navigationIcon="@drawable/ic_arrow_back"
             app:navigationIconTint="?attr/colorOnSurface"
-            app:title="Support SidePanel"
+            app:title="Support SideFlow"
             app:titleCentered="true" />
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -62,7 +62,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="SidePanel is 100% free &amp; open-source. Your support helps keep the project alive!"
+                android:text="SideFlow is 100% free &amp; open-source. Your support helps keep the project alive!"
                 android:textColor="?attr/colorOnSurfaceVariant"
                 android:textSize="14sp"
                 android:layout_marginTop="8dp"

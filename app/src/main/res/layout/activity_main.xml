@@ -161,7 +161,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Exclude SidePanel from battery optimization to prevent the system from killing it in the background."
+                    android:text="Exclude SideFlow from battery optimization to prevent the system from killing it in the background."
                     android:textColor="#B3FFFFFF"
                     android:textSize="12sp" />
 

@@ -1,1 +1,1 @@
-Smart Edge: Sidebar & Gestures
+SideFlow: Sidebar & Gestures
