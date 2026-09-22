@@ -241,10 +241,9 @@ class SettingsMainActivity : AppCompatActivity() {
                 .setTitle(R.string.dialog_reset_title)
                 .setMessage(R.string.dialog_reset_msg)
                 .setPositiveButton(R.string.btn_reset) { _, _ ->
-                    panelPrefs.resetToDefaults()
                     lifecycleScope.launch {
                         val defaultApps = AppRepository(this@SettingsMainActivity).getTop5Apps()
-                        panelPrefs.setPanelApps(defaultApps)
+                        panelPrefs.resetToDefaults(defaultApps)
                         applyGlobalRefresh()
                         binding.root.showModernToast(getString(R.string.toast_reset_success))
                     }

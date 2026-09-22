@@ -209,7 +209,7 @@ class ShelfConfigTest {
         assertEquals(
             listOf(
                 "sideflow.tool.screenshot",
-                "sideflow.folder.tools",
+                "sideflow.tool.tools",
                 "sideflow.shortcut.reboot"
             ),
             config.sections.single().items.map { it.reference }
@@ -217,11 +217,36 @@ class ShelfConfigTest {
         assertEquals(
             listOf(
                 ShelfItemType.SYSTEM_ACTION,
-                ShelfItemType.FOLDER,
+                ShelfItemType.SYSTEM_ACTION,
                 ShelfItemType.SYSTEM_ACTION
             ),
             config.sections.single().items.map { it.type }
         )
+    }
+
+    @Test
+    fun normalizationConvertsPreviouslyMigratedToolsFolderAlias() {
+        val normalized = ShelfConfigOps.normalize(
+            ShelfConfig(
+                sections = listOf(
+                    ShelfSection(
+                        id = "apps",
+                        title = "Apps",
+                        items = listOf(
+                            ShelfItem(
+                                id = "old-tools-folder",
+                                type = ShelfItemType.FOLDER,
+                                reference = "sideflow.folder.tools"
+                            )
+                        )
+                    )
+                )
+            )
+        )
+
+        val item = normalized.sections.single().items.single()
+        assertEquals("sideflow.tool.tools", item.reference)
+        assertEquals(ShelfItemType.SYSTEM_ACTION, item.type)
     }
 
     @Test

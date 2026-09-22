@@ -77,6 +77,8 @@ object ShelfConfigOps {
     fun migrateLegacyIdentifier(identifier: String): String {
         val value = identifier.trim()
         return when {
+            value == "smartedge.folder.tools" || value == "sideflow.folder.tools" ->
+                "sideflow.tool.tools"
             value.startsWith("smartedge.folder.") ->
                 "sideflow.folder." + value.removePrefix("smartedge.folder.")
             value.startsWith("smartedge.tool.") ->
@@ -386,7 +388,10 @@ object ShelfConfigOps {
             if (originalReference.isBlank()) return@mapIndexedNotNull null
 
             val reference = migrateLegacyIdentifier(originalReference)
-            val type = if (isLegacyPseudoIdentifier(originalReference)) {
+            val type = if (
+                isLegacyPseudoIdentifier(originalReference) ||
+                originalReference == "sideflow.folder.tools"
+            ) {
                 legacyType(reference)
             } else {
                 item.type

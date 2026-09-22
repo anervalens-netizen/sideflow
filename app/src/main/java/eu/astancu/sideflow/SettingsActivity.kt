@@ -472,10 +472,9 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         binding.btnResetDefaults.setOnClickListener {
-            panelPrefs.resetToDefaults()
             lifecycleScope.launch {
                 val defaultApps = AppRepository(this@SettingsActivity).getTop5Apps()
-                panelPrefs.setPanelApps(defaultApps)
+                panelPrefs.resetToDefaults(defaultApps)
                 loadCurrentSettings()
                 applyAndShow()
                 binding.root.showModernToast("Settings Reset to Defaults")

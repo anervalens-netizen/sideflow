@@ -82,11 +82,21 @@ class SideFlowPolicyTest {
         assertEquals(0, SideFlowPolicy.sanitizePanelRadiusDp(-2))
         assertEquals(60, SideFlowPolicy.sanitizePanelRadiusDp(80))
         assertEquals(0.8f, SideFlowPolicy.sanitizeIconScale(0.1f), 0.0001f)
+        assertEquals(1.0f, SideFlowPolicy.sanitizeIconScale(1.04f), 0.0001f)
+        assertEquals(1.1f, SideFlowPolicy.sanitizeIconScale(1.05f), 0.0001f)
         assertEquals(2.0f, SideFlowPolicy.sanitizeIconScale(4.0f), 0.0001f)
         assertEquals(200, SideFlowPolicy.sanitizePanelMaxHeightDp(10))
         assertEquals(800, SideFlowPolicy.sanitizePanelMaxHeightDp(900))
         assertEquals(300, SideFlowPolicy.sanitizePickerMaxHeightDp(10))
         assertEquals(800, SideFlowPolicy.sanitizePickerMaxHeightDp(900))
+    }
+
+    @Test
+    fun folderChildrenAreNotAdvertisedAsReorderable() {
+        assertTrue(SideFlowPolicy.canReorderShelfItem(false, true, "apps"))
+        assertFalse(SideFlowPolicy.canReorderShelfItem(false, true, "folder:parent-id"))
+        assertFalse(SideFlowPolicy.canReorderShelfItem(true, true, "apps"))
+        assertFalse(SideFlowPolicy.canReorderShelfItem(false, false, "apps"))
     }
 
     @Test

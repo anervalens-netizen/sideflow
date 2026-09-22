@@ -70,8 +70,20 @@ object SideFlowPolicy {
     fun sanitizePickerMaxHeightDp(value: Int): Int =
         value.coerceIn(MIN_PICKER_MAX_HEIGHT_DP, MAX_PICKER_MAX_HEIGHT_DP)
 
-    fun sanitizeIconScale(value: Float): Float =
-        if (value.isFinite()) value.coerceIn(MIN_ICON_SCALE, MAX_ICON_SCALE) else 1.0f
+    fun sanitizeIconScale(value: Float): Float {
+        if (!value.isFinite()) return 1.0f
+        val clamped = value.coerceIn(MIN_ICON_SCALE, MAX_ICON_SCALE)
+        return (kotlin.math.floor(clamped * 10.0 + 0.500001) / 10.0)
+            .toFloat()
+            .coerceIn(MIN_ICON_SCALE, MAX_ICON_SCALE)
+    }
+
+    fun canReorderShelfItem(
+        isSectionHeader: Boolean,
+        hasShelfItemId: Boolean,
+        sectionId: String?
+    ): Boolean =
+        !isSectionHeader && hasShelfItemId && sectionId?.startsWith("folder:") != true
 
     fun applyOpacityToArgb(argb: Int, opacityPercent: Int): Int {
         val baseAlpha = (argb ushr 24) and 0xFF

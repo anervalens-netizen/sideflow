@@ -393,7 +393,17 @@ class PanelPreferences(context: Context) {
         }
     }
 
-    fun resetToDefaults() {
+    fun resetToDefaults(defaultPanelApps: List<String>) {
+        val defaultShelf = ShelfConfigOps.fromLegacyIdentifiers(
+            identifiers = defaultPanelApps,
+            columns = DEFAULT_PANEL_COLS
+        )
+        val defaultPanelReferences = defaultShelf.sections
+            .flatMap { section -> section.items.map { it.reference } }
+            .distinct()
+            .joinToString(DELIMITER)
+        val encodedDefaultShelf = ShelfConfigJson.encode(defaultShelf)
+
         prefs.edit(commit = true) {
             putString(KEY_PANEL_SIDE, DEFAULT_SIDE)
             putBoolean(KEY_AUTO_START, DEFAULT_AUTO_START)
@@ -458,8 +468,8 @@ class PanelPreferences(context: Context) {
             putBoolean(KEY_DRAG_TO_SPLIT, true)
             putBoolean(KEY_REMEMBER_SCROLL, false)
             putBoolean(KEY_AUTO_SHOW_KEYBOARD, false)
-            remove(KEY_PANEL_APPS)
-            remove(KEY_SHELF_CONFIG)
+            putString(KEY_PANEL_APPS, defaultPanelReferences)
+            putString(KEY_SHELF_CONFIG, encodedDefaultShelf)
             putString(KEY_GAME_APPS, "")
             putBoolean(KEY_AUTO_HIDE_FULLSCREEN, false)
             putString(KEY_FULLSCREEN_WHITELIST, "")
@@ -676,7 +686,7 @@ class PanelPreferences(context: Context) {
     fun applyAppearancePreset(preset: AppearancePresetKey) {
         val spec = AppearancePresetCatalog.spec(preset)
         if (spec == null) {
-            appearancePreset = AppearancePresetKey.CUSTOM
+            markAppearanceCustomPreservingSurface()
             return
         }
 
@@ -718,9 +728,12 @@ class PanelPreferences(context: Context) {
     fun markAppearanceCustomPreservingSurface() {
         if (appearancePreset == AppearancePresetKey.CUSTOM) return
         val baseColor = resolvedPanelBaseBackgroundColor()
+        val effectiveAccent = resolvedPanelAccentColor()
         val storedColor = String.format(java.util.Locale.US, "#%08X", baseColor)
+        val storedAccent = String.format(java.util.Locale.US, "#%08X", effectiveAccent)
         prefs.edit {
             putString(KEY_PANEL_BG_COLOR, storedColor)
+            putString(KEY_ACCENT_COLOR, storedAccent)
             putString(KEY_APPEARANCE_PRESET, AppearancePresetKey.CUSTOM.storageValue)
         }
     }

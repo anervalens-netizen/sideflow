@@ -141,6 +141,25 @@ Codex reviewed c68ab48 and completed on 2026-09-22 with five additional P2 findi
 - git diff --check: **PASS**.
 - A new exact-head Codex review is required; P4 remains draft/unmerged.
 
+## PR #6 — fresh R0/P4 review round 3
+
+Codex reviewed 9c36fad and published five additional P2 findings. All five are remediated locally in the next commit; a clean exact-head review remains mandatory before R0 can close.
+
+| ID | Severity | Finding | Current assessment | Remediation evidence |
+| --- | --- | --- | --- | --- |
+| r4071312972 | P2 | Imported/persisted icon scale can be in-range but off the Slider 0.1 step | **RESOLVED (local)** | Icon scale sanitizer now clamps and quantizes to 0.1; regressions cover 1.04 -> 1.0 and 1.05 -> 1.1. |
+| r4071312991 | P2 | Explicitly selecting Custom from Material You bypasses color preservation | **RESOLVED (local)** | applyAppearancePreset(Custom) now routes through the preservation helper; the helper materializes both effective surface and effective accent before switching the preset marker. |
+| r4071313004 | P2 | Reset can clear shelf before lifecycle-scoped default-app query completes | **RESOLVED (local)** | Both reset entry points now query default apps first, then synchronously reset and seed with no suspension point between those mutations. Cancellation before the query completes leaves existing settings intact. |
+| r4071313012 | P2 | Legacy smartedge/sideflow tools-folder alias opens as an empty persisted folder | **RESOLVED (local)** | Both smartedge.folder.tools and old sideflow.folder.tools normalize to sideflow.tool.tools as SYSTEM_ACTION, routing through the synthetic built-in Tools behavior; flat and structured migration regressions cover it. |
+| r4071313019 | P2 | Nested-folder children appear draggable although their order cannot persist | **RESOLVED (local)** | Stable child IDs remain for recursive navigation, but reorder policy rejects items whose sectionId is folder:* until recursive order persistence exists; pure policy regression added. |
+
+### PR #6 round-3 local validation
+
+- Gradle testDebugUnitTest + assembleDebug: **PASS**.
+- Unit tests: **49/49 PASS**.
+- git diff --check: **PASS**.
+- P4 remains draft/unmerged; another Codex review is required on the resulting exact HEAD.
+
 ## Mandatory remediation order
 
 1. **Privacy / misleading UI first:** PR #2 donation UI, backup filename ignore, PR #5 Auto Backup and export warning.

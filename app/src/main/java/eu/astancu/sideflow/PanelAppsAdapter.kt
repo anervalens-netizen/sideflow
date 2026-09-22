@@ -65,10 +65,15 @@ class PanelAppsAdapter(
         return GRID_SPAN_COUNT / columns
     }
 
-    fun isMovable(position: Int): Boolean =
-        position in mutableApps.indices &&
-            mutableApps[position].type != AppInfo.Type.SECTION_HEADER &&
-            mutableApps[position].shelfItemId != null
+    fun isMovable(position: Int): Boolean {
+        if (position !in mutableApps.indices) return false
+        val app = mutableApps[position]
+        return SideFlowPolicy.canReorderShelfItem(
+            isSectionHeader = app.type == AppInfo.Type.SECTION_HEADER,
+            hasShelfItemId = app.shelfItemId != null,
+            sectionId = app.sectionId
+        )
+    }
 
     fun setShowAddButton(show: Boolean) {
         if (showAddButton != show) {
