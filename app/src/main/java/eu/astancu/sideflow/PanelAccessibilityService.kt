@@ -147,6 +147,11 @@ class PanelAccessibilityService : AccessibilityService() {
      *   own window manager handles placing it in split.
      */
     private fun triggerSplitScreen(pkg: String, mode: Int) {
+        if (mode == SplitScreenHelper.MODE_FULLSCREEN || mode == SplitScreenHelper.MODE_FREEFORM) {
+            SplitScreenHelper.launchApp(this, pkg, mode)
+            return
+        }
+
         val handler = android.os.Handler(android.os.Looper.getMainLooper())
         val isVivo = VivoUtils.isVivo()
 

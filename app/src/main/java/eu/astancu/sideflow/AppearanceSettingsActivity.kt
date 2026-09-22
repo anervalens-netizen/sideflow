@@ -46,6 +46,12 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         binding.sbPanelRadius.value = panelPrefs.panelCornerRadius.toFloat()
         binding.tvRadiusValue.text = "${panelPrefs.panelCornerRadius}dp"
 
+        binding.sbPanelWidth.value = panelPrefs.panelWidthDp.toFloat()
+        binding.tvPanelWidthValue.text = "${panelPrefs.panelWidthDp}dp"
+
+        binding.sbItemGap.value = panelPrefs.itemGapDp.toFloat()
+        binding.tvItemGapValue.text = "${panelPrefs.itemGapDp}dp"
+
         binding.sbIconScale.value = panelPrefs.scaleFactor
         binding.tvIconScaleValue.text = String.format("%.1fx", panelPrefs.scaleFactor)
 
@@ -110,6 +116,18 @@ class AppearanceSettingsActivity : AppCompatActivity() {
             applyOnly()
         }
 
+        binding.sbPanelWidth.addOnChangeListener { _, value, _ ->
+            panelPrefs.panelWidthDp = value.toInt()
+            binding.tvPanelWidthValue.text = "${panelPrefs.panelWidthDp}dp"
+            applyOnly()
+        }
+
+        binding.sbItemGap.addOnChangeListener { _, value, _ ->
+            panelPrefs.itemGapDp = value.toInt()
+            binding.tvItemGapValue.text = "${panelPrefs.itemGapDp}dp"
+            applyOnly()
+        }
+
         binding.sbIconScale.addOnChangeListener { _, value, _ ->
             panelPrefs.scaleFactor = value
             binding.tvIconScaleValue.text = String.format("%.1fx", value)
@@ -164,6 +182,22 @@ class AppearanceSettingsActivity : AppCompatActivity() {
             panelPrefs.panelCornerRadius = default
             binding.sbPanelRadius.value = default.toFloat()
             binding.tvRadiusValue.text = "${default}dp"
+            applyOnly()
+        }
+
+        binding.btnResetPanelWidth.setOnClickListener {
+            val default = PanelPreferences.DEFAULT_PANEL_WIDTH
+            panelPrefs.panelWidthDp = default
+            binding.sbPanelWidth.value = default.toFloat()
+            binding.tvPanelWidthValue.text = "${default}dp"
+            applyOnly()
+        }
+
+        binding.btnResetItemGap.setOnClickListener {
+            val default = PanelPreferences.DEFAULT_ITEM_GAP
+            panelPrefs.itemGapDp = default
+            binding.sbItemGap.value = default.toFloat()
+            binding.tvItemGapValue.text = "${default}dp"
             applyOnly()
         }
 
@@ -253,8 +287,11 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         }
 
         binding.featureColumns.setOnClickListener {
-            val options = arrayOf("1 Column", "2 Columns")
-            val currentSelectedIndex = (panelPrefs.panelColumns - 1).coerceIn(0, 1)
+            val options = (SideFlowPolicy.MIN_COLUMNS..SideFlowPolicy.MAX_COLUMNS)
+                .map { "$it Columns" }
+                .toTypedArray()
+            val currentSelectedIndex = (panelPrefs.panelColumns - SideFlowPolicy.MIN_COLUMNS)
+                .coerceIn(0, options.lastIndex)
             var newlySelectedIndex = currentSelectedIndex
 
             com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
@@ -263,7 +300,7 @@ class AppearanceSettingsActivity : AppCompatActivity() {
                     newlySelectedIndex = which
                 }
                 .setPositiveButton("Apply") { _, _ ->
-                    val columns = newlySelectedIndex + 1
+                    val columns = newlySelectedIndex + SideFlowPolicy.MIN_COLUMNS
                     panelPrefs.panelColumns = columns
                     binding.tvColumnsValue.text = options[newlySelectedIndex]
                     applyOnly()

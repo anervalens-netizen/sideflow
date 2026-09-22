@@ -21,7 +21,16 @@ object SplitScreenHelper {
         val pm = context.packageManager
         val launchIntent = pm.getLaunchIntentForPackage(packageName) ?: return
         
-        // 1. Critical Flags for Multi-Window
+        if (mode == WINDOWING_MODE_FULLSCREEN) {
+            launchIntent.addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
+            )
+            context.startActivity(launchIntent)
+            return
+        }
+
+        // 1. Critical Flags for explicit multi-window actions only.
         launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         launchIntent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
         
@@ -77,6 +86,7 @@ object SplitScreenHelper {
         }
     }
 
+    const val MODE_FULLSCREEN = WINDOWING_MODE_FULLSCREEN
     const val MODE_TOP = WINDOWING_MODE_SPLIT_SCREEN_PRIMARY
     const val MODE_BOTTOM = WINDOWING_MODE_SPLIT_SCREEN_SECONDARY
     const val MODE_FREEFORM = WINDOWING_MODE_FREEFORM

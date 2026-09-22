@@ -133,7 +133,7 @@
                             android:id="@+id/tvColumnsValue"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="1 Column"
+                            android:text="4 Columns"
                             android:textColor="?attr/colorOnSurfaceVariant"
                             android:textSize="14sp" />
                     </LinearLayout>
@@ -325,6 +325,22 @@
                     </LinearLayout>
                     <eu.astancu.sideflow.DefaultMarkerSlider style="@style/Widget.App.Slider"
                         android:id="@+id/sbPanelRadius" android:layout_width="match_parent" android:layout_height="wrap_content" android:valueFrom="0.0" android:valueTo="60.0" android:value="20.0" app:tickVisible="false" android:layout_marginBottom="12dp" />
+
+                    <LinearLayout android:id="@+id/feature_panel_width" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:layout_marginTop="8dp" android:layout_marginBottom="4dp">
+                        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/panel_width" android:textColor="?attr/colorOnSurfaceVariant" android:textSize="12sp" />
+                        <ImageView android:id="@+id/btnResetPanelWidth" android:layout_width="20dp" android:layout_height="20dp" android:src="@drawable/ic_restore" android:layout_marginEnd="8dp" android:background="?attr/selectableItemBackground" android:padding="2dp" app:tint="?attr/colorPrimary" />
+                        <TextView android:id="@+id/tvPanelWidthValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="300dp" android:textColor="?attr/colorPrimary" android:textSize="12sp" android:textStyle="bold" />
+                    </LinearLayout>
+                    <eu.astancu.sideflow.DefaultMarkerSlider style="@style/Widget.App.Slider"
+                        android:id="@+id/sbPanelWidth" android:layout_width="match_parent" android:layout_height="wrap_content" android:valueFrom="180.0" android:valueTo="420.0" android:stepSize="10.0" android:value="300.0" app:tickVisible="false" android:layout_marginBottom="12dp" />
+
+                    <LinearLayout android:id="@+id/feature_item_gap" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:layout_marginTop="8dp" android:layout_marginBottom="4dp">
+                        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/item_gap" android:textColor="?attr/colorOnSurfaceVariant" android:textSize="12sp" />
+                        <ImageView android:id="@+id/btnResetItemGap" android:layout_width="20dp" android:layout_height="20dp" android:src="@drawable/ic_restore" android:layout_marginEnd="8dp" android:background="?attr/selectableItemBackground" android:padding="2dp" app:tint="?attr/colorPrimary" />
+                        <TextView android:id="@+id/tvItemGapValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="6dp" android:textColor="?attr/colorPrimary" android:textSize="12sp" android:textStyle="bold" />
+                    </LinearLayout>
+                    <eu.astancu.sideflow.DefaultMarkerSlider style="@style/Widget.App.Slider"
+                        android:id="@+id/sbItemGap" android:layout_width="match_parent" android:layout_height="wrap_content" android:valueFrom="0.0" android:valueTo="20.0" android:stepSize="1.0" android:value="6.0" app:tickVisible="false" android:layout_marginBottom="12dp" />
 
                     <LinearLayout android:id="@+id/feature_max_height" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:layout_marginTop="8dp" android:layout_marginBottom="4dp">
                         <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/sidebar_max_height" android:textColor="?attr/colorOnSurfaceVariant" android:textSize="12sp" />
