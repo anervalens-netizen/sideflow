@@ -94,7 +94,9 @@ class AppPickerPanelView @JvmOverloads constructor(
                 findViewById<View>(R.id.layoutPickerNotifications).visibility = View.GONE
             } else {
                 findViewById<View>(R.id.layoutPickerNotifications).visibility = View.VISIBLE
-                notificationAdapter.setForceFreeform(true)
+                // SideFlow never forces freeform from a normal tap. Notifications
+                // follow the same full-screen default as every other app item.
+                notificationAdapter.setForceFreeform(false)
                 notificationAdapter.setIsNotificationType(true)
                 notificationAdapter.submitList(appInfos)
             }
@@ -711,7 +713,10 @@ class AppPickerPanelView @JvmOverloads constructor(
             if (intent != null) {
                 intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
                 
-                val shouldFreeform = forceFreeform || (panelPrefs.freeformEnabled && context.isFreeformEnabled())
+                val shouldFreeform = SideFlowPolicy.shouldLaunchFreeform(
+                    explicitSecondaryAction = forceFreeform,
+                    freeformAvailable = context.isFreeformEnabled()
+                )
                 
                 if (shouldFreeform && context.isFreeformEnabled() && app.type != AppInfo.Type.SHORTCUT) {
                     launchFreeform(intent)

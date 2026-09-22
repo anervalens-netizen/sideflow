@@ -154,12 +154,10 @@ class PanelAppsAdapter(
             // Keep app labels white for the dark floating panel
             holder.tvName.setTextColor(android.graphics.Color.parseColor("#D9FFFFFF"))
 
-            // Adjust padding for 2-column mode to look more centered
-            if (currentColumns == 2) {
-                holder.itemView.setPadding(context.dpToPx(8), holder.itemView.paddingTop, context.dpToPx(8), holder.itemView.paddingBottom)
-            } else {
-                holder.itemView.setPadding(context.dpToPx(2), holder.itemView.paddingTop, context.dpToPx(2), holder.itemView.paddingBottom)
-            }
+            // Spacing is independent from icon scale and works consistently
+            // across all supported column counts.
+            val halfGapPx = context.dpToPx(panelPrefs.itemGapDp) / 2
+            holder.itemView.setPadding(halfGapPx, halfGapPx, halfGapPx, halfGapPx)
 
             // Fetch from mutableApps so it stays synchronous with rapid dragging
             val app = if (position < mutableApps.size) mutableApps[position] else return
@@ -266,7 +264,10 @@ class PanelAppsAdapter(
                         android.content.Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
                     )
                     
-                    val shouldFreeform = forceFreeform || (panelPrefs.freeformEnabled && context.isFreeformEnabled())
+                    val shouldFreeform = SideFlowPolicy.shouldLaunchFreeform(
+                        explicitSecondaryAction = forceFreeform,
+                        freeformAvailable = context.isFreeformEnabled()
+                    )
                     val isAccessibilityShortcut = app.type == AppInfo.Type.SHORTCUT && 
                                                (app.packageName == "sideflow.shortcut.one_hand" || 
                                                 app.packageName == "sideflow.shortcut.reboot")

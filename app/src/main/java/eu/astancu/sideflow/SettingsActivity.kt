@@ -78,7 +78,9 @@ class SettingsActivity : AppCompatActivity() {
         binding.tvBlurAmountValue.text = panelPrefs.blurAmount.toString()
         binding.layoutBlurAmount.visibility = if (panelPrefs.blurEnabled) View.VISIBLE else View.GONE
         
-        binding.switchColumns.isChecked = panelPrefs.panelColumns == 2
+        // Exact 2–6 column selection lives in Appearance. Hide the legacy
+        // binary switch so it cannot overwrite a modern grid setting.
+        binding.switchColumns.visibility = View.GONE
         binding.sbOpacity.value = panelPrefs.panelOpacity.toFloat()
         binding.tvOpacityValue.text = "${panelPrefs.panelOpacity}%"
         
@@ -144,7 +146,7 @@ class SettingsActivity : AppCompatActivity() {
 
         binding.switchTools.isEnabled = true
         binding.switchHideBg.isEnabled = true
-        binding.switchColumns.isEnabled = true
+        binding.switchColumns.isEnabled = false
         
         binding.switchUseCustomAccent.isEnabled = true
         binding.sbPanelRadius.isEnabled = true
@@ -260,10 +262,7 @@ class SettingsActivity : AppCompatActivity() {
             applyOnly()
         }
 
-        binding.switchColumns.setOnCheckedChangeListener { _, isChecked ->
-            panelPrefs.panelColumns = if (isChecked) 2 else 1
-            applyOnly()
-        }
+        binding.switchColumns.setOnCheckedChangeListener(null)
 
         binding.sbOpacity.addOnChangeListener { _, value, fromUser ->
             if (fromUser) {

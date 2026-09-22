@@ -809,7 +809,8 @@ class FloatingPanelService : Service() {
                             val mode = when {
                                 dropY < screenHeight * 0.30 -> SplitScreenHelper.MODE_TOP
                                 dropY > screenHeight * 0.70 -> SplitScreenHelper.MODE_BOTTOM
-                                else -> SplitScreenHelper.MODE_FREEFORM
+                                panelPrefs.freeformEnabled -> SplitScreenHelper.MODE_FREEFORM
+                                else -> SplitScreenHelper.MODE_FULLSCREEN
                             }
                             
                             // Don't close panel IMMEDIATELY here, wait for DRAG_ENDED
@@ -990,7 +991,7 @@ class FloatingPanelService : Service() {
             picker.setOnClickListener { }
             val isRight = panelPrefs.panelSide == PanelPreferences.SIDE_RIGHT
             val density = resources.displayMetrics.density
-            val sidePanelWidthDp = 72
+            val sidePanelWidthDp = SideFlowPolicy.PICKER_COLLAPSED_PANEL_WIDTH_DP
             val sidePanelMarginDp = 12
             
             // Dynamic Height calculation for Picker Panel based on Screen Height

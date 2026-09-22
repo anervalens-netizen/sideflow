@@ -390,22 +390,24 @@ class SidePanelView @JvmOverloads constructor(
         binding.btnClose.rotation = if (isRight) 180f else 0f
 
         val scale = getFinalScaleFactor()
-        val lp = binding.panelCard.layoutParams
-        
-        // Scale only the icon area, keeping the padding/chrome fixed
-        val newWidthDp = if (currentCols == 2) {
-            52f + (88f * scale)
+        val displayMetrics = context.resources.displayMetrics
+        val screenWidthDp = displayMetrics.widthPixels / displayMetrics.density
+        val screenHeightPx = displayMetrics.heightPixels
+        val screenHeightDp = screenHeightPx / displayMetrics.density
+
+        val maxPanelWidthDp = (screenWidthDp.toInt() - 24)
+            .coerceAtLeast(SideFlowPolicy.MIN_PANEL_WIDTH_DP)
+        val requestedWidthDp = if (isPickerOpenInternal) {
+            SideFlowPolicy.PICKER_COLLAPSED_PANEL_WIDTH_DP
         } else {
-            32f + (40f * scale)
+            panelPrefs.panelWidthDp
         }
-        
-        lp.width = context.dpToPx(newWidthDp.toInt())
+        val resolvedWidthDp = requestedWidthDp.coerceAtMost(maxPanelWidthDp)
+        val lp = binding.panelCard.layoutParams
+        lp.width = context.dpToPx(resolvedWidthDp)
         binding.panelCard.layoutParams = lp
 
         // Calculate maximum allowed height for the RecyclerView to ensure the panel fits on screen
-        val displayMetrics = context.resources.displayMetrics
-        val screenHeightPx = displayMetrics.heightPixels
-        val screenHeightDp = screenHeightPx / displayMetrics.density
         
         // Subtract estimated height of other UI elements (paddings, tools, close button)
         // Top Padding (12) + Bottom Padding (4) + Tools Margin (4) + Close Btn (48) = 68dp
@@ -478,6 +480,7 @@ class SidePanelView @JvmOverloads constructor(
 
     fun animatePickerToggle(isOpen: Boolean) {
         isPickerOpenInternal = isOpen
+        updateSideLayout()
         val targetRotation = if (isOpen) 90f else (if (panelPrefs.panelSide == PanelPreferences.SIDE_RIGHT) 180f else 0f)
         springRotation.animateToFinalPosition(targetRotation)
     }

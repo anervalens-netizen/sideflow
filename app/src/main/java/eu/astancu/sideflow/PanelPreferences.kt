@@ -28,6 +28,8 @@ class PanelPreferences(context: Context) {
         private const val KEY_ACCENT_COLOR = "accent_color"
         private const val KEY_USE_CUSTOM_ACCENT = "use_custom_accent"
         private const val KEY_PANEL_COLUMNS = "panel_columns"
+        private const val KEY_PANEL_WIDTH = "panel_width_dp"
+        private const val KEY_ITEM_GAP = "item_gap_dp"
         private const val KEY_UI_THEME = "ui_theme"
 
         private const val KEY_PANEL_RADIUS = "panel_radius"
@@ -156,7 +158,9 @@ class PanelPreferences(context: Context) {
         const val DEFAULT_HANDLE_OFFSET = 0
         const val DEFAULT_ACCENT_COLOR = "#4A9EFF"
         const val DEFAULT_USE_CUSTOM_ACCENT = false
-        const val DEFAULT_PANEL_COLS = 1
+        const val DEFAULT_PANEL_COLS = SideFlowPolicy.DEFAULT_COLUMNS
+        const val DEFAULT_PANEL_WIDTH = SideFlowPolicy.DEFAULT_PANEL_WIDTH_DP
+        const val DEFAULT_ITEM_GAP = SideFlowPolicy.DEFAULT_ITEM_GAP_DP
         const val DEFAULT_THEME = THEME_ORIGIN
         const val DEFAULT_PANEL_RADIUS = 20
         const val DEFAULT_PANEL_BG = "#E61A1C1E"
@@ -196,7 +200,7 @@ class PanelPreferences(context: Context) {
     /** Exports all settings (except runtime/session keys) to a JSON string. */
     fun exportToJson(): String {
         val obj = org.json.JSONObject()
-        obj.put("_version", 1)
+        obj.put("_version", 2)
         obj.put("_app", "SideFlow")
 
         // Strings
@@ -223,6 +227,8 @@ class PanelPreferences(context: Context) {
             KEY_HANDLE_WIDTH to handleWidth,
             KEY_HANDLE_OFFSET to handleVerticalOffset,
             KEY_PANEL_COLUMNS to panelColumns,
+            KEY_PANEL_WIDTH to panelWidthDp,
+            KEY_ITEM_GAP to itemGapDp,
             KEY_PANEL_RADIUS to panelCornerRadius,
             KEY_PILL_WIDTH to pillWidth,
             KEY_BLUR_AMOUNT to blurAmount,
@@ -302,7 +308,9 @@ class PanelPreferences(context: Context) {
                 if (obj.has(KEY_HANDLE_HEIGHT)) putInt(KEY_HANDLE_HEIGHT, obj.getInt(KEY_HANDLE_HEIGHT))
                 if (obj.has(KEY_HANDLE_WIDTH)) putInt(KEY_HANDLE_WIDTH, obj.getInt(KEY_HANDLE_WIDTH))
                 if (obj.has(KEY_HANDLE_OFFSET)) putInt(KEY_HANDLE_OFFSET, obj.getInt(KEY_HANDLE_OFFSET))
-                if (obj.has(KEY_PANEL_COLUMNS)) putInt(KEY_PANEL_COLUMNS, obj.getInt(KEY_PANEL_COLUMNS))
+                if (obj.has(KEY_PANEL_COLUMNS)) putInt(KEY_PANEL_COLUMNS, SideFlowPolicy.sanitizeColumns(obj.getInt(KEY_PANEL_COLUMNS)))
+                if (obj.has(KEY_PANEL_WIDTH)) putInt(KEY_PANEL_WIDTH, SideFlowPolicy.sanitizePanelWidthDp(obj.getInt(KEY_PANEL_WIDTH)))
+                if (obj.has(KEY_ITEM_GAP)) putInt(KEY_ITEM_GAP, SideFlowPolicy.sanitizeItemGapDp(obj.getInt(KEY_ITEM_GAP)))
                 if (obj.has(KEY_PANEL_RADIUS)) putInt(KEY_PANEL_RADIUS, obj.getInt(KEY_PANEL_RADIUS))
                 if (obj.has(KEY_PILL_WIDTH)) putInt(KEY_PILL_WIDTH, obj.getInt(KEY_PILL_WIDTH))
                 if (obj.has(KEY_BLUR_AMOUNT)) putInt(KEY_BLUR_AMOUNT, obj.getInt(KEY_BLUR_AMOUNT))
@@ -365,6 +373,8 @@ class PanelPreferences(context: Context) {
             putString(KEY_ACCENT_COLOR, DEFAULT_ACCENT_COLOR)
             putBoolean(KEY_USE_CUSTOM_ACCENT, DEFAULT_USE_CUSTOM_ACCENT)
             putInt(KEY_PANEL_COLUMNS, DEFAULT_PANEL_COLS)
+            putInt(KEY_PANEL_WIDTH, DEFAULT_PANEL_WIDTH)
+            putInt(KEY_ITEM_GAP, DEFAULT_ITEM_GAP)
             putString(KEY_UI_THEME, DEFAULT_THEME)
             putInt(KEY_PANEL_RADIUS, DEFAULT_PANEL_RADIUS)
             putString(KEY_PANEL_BG_COLOR, DEFAULT_PANEL_BG)
@@ -605,8 +615,16 @@ class PanelPreferences(context: Context) {
         set(value) = prefs.edit { putString(KEY_ACCENT_COLOR, value) }
 
     var panelColumns: Int
-        get() = (prefs.getInt(KEY_PANEL_COLUMNS, DEFAULT_PANEL_COLS)).coerceIn(1, 2)
-        set(value) = prefs.edit { putInt(KEY_PANEL_COLUMNS, value.coerceIn(1, 2)) }
+        get() = SideFlowPolicy.sanitizeColumns(prefs.getInt(KEY_PANEL_COLUMNS, DEFAULT_PANEL_COLS))
+        set(value) = prefs.edit { putInt(KEY_PANEL_COLUMNS, SideFlowPolicy.sanitizeColumns(value)) }
+
+    var panelWidthDp: Int
+        get() = SideFlowPolicy.sanitizePanelWidthDp(prefs.getInt(KEY_PANEL_WIDTH, DEFAULT_PANEL_WIDTH))
+        set(value) = prefs.edit { putInt(KEY_PANEL_WIDTH, SideFlowPolicy.sanitizePanelWidthDp(value)) }
+
+    var itemGapDp: Int
+        get() = SideFlowPolicy.sanitizeItemGapDp(prefs.getInt(KEY_ITEM_GAP, DEFAULT_ITEM_GAP))
+        set(value) = prefs.edit { putInt(KEY_ITEM_GAP, SideFlowPolicy.sanitizeItemGapDp(value)) }
 
     var uiTheme: String
         get() = prefs.getString(KEY_UI_THEME, DEFAULT_THEME) ?: DEFAULT_THEME
