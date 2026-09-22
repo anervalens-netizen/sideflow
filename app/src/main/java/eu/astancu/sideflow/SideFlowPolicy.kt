@@ -125,8 +125,8 @@ object SideFlowPolicy {
         itemGapDp: Int,
         contentHorizontalPaddingDp: Int = 0
     ): Int {
-        val safeColumns = sanitizeColumns(columns)
-        val safeWidth = sanitizePanelWidthDp(panelWidthDp)
+        val safeColumns = columns.coerceIn(1, MAX_COLUMNS)
+        val safeWidth = panelWidthDp.coerceAtLeast(1)
         val safeGap = sanitizeItemGapDp(itemGapDp)
         val usableGridWidth = (safeWidth - PANEL_GRID_HORIZONTAL_INSET_DP).coerceAtLeast(safeColumns)
         val cellWidth = usableGridWidth / safeColumns

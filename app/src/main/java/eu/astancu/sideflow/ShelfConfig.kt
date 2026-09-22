@@ -234,13 +234,23 @@ object ShelfConfigOps {
         val normalized = normalize(config)
         val sections = normalized.sections.map { section ->
             section.copy(
-                items = section.items.filterNot {
-                    it.id == itemIdOrIdentity || it.identityKey == itemIdOrIdentity
-                }
+                items = removeItemsRecursive(section.items, itemIdOrIdentity)
             )
         }
         return normalize(normalized.copy(sections = sections))
     }
+
+    private fun removeItemsRecursive(
+        items: List<ShelfItem>,
+        itemIdOrIdentity: String
+    ): List<ShelfItem> =
+        items.mapNotNull { item ->
+            if (item.id == itemIdOrIdentity || item.identityKey == itemIdOrIdentity) {
+                null
+            } else {
+                item.copy(children = removeItemsRecursive(item.children, itemIdOrIdentity))
+            }
+        }
 
     fun moveItem(
         config: ShelfConfig,

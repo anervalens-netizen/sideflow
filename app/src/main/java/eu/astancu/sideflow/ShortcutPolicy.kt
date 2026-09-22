@@ -8,8 +8,16 @@ object ShortcutPolicy {
         val text = sharedText?.trim().orEmpty()
         if (text.isBlank()) return null
 
-        val match = uriPattern.find(text)?.value ?: return normalizeTarget(text)
-        return normalizeTarget(trimSharedTextTarget(match))
+        val match = uriPattern.find(text) ?: return normalizeTarget(text)
+        val prefix = text.substring(0, match.range.first)
+        val suffix = text.substring(match.range.last + 1)
+        val standaloneTarget = prefix.isBlank() && suffix.isBlank()
+        return normalizeTarget(
+            trimSharedTextTarget(
+                raw = match.value,
+                trimSentencePunctuation = !standaloneTarget
+            )
+        )
     }
 
     /**
@@ -36,15 +44,25 @@ object ShortcutPolicy {
         }
     }
 
-    private fun trimSharedTextTarget(raw: String): String {
-        var value = raw.trimEnd(*sharedTextPunctuation)
+    private fun trimSharedTextTarget(
+        raw: String,
+        trimSentencePunctuation: Boolean
+    ): String {
+        var value = if (trimSentencePunctuation) {
+            raw.trimEnd(*sharedTextPunctuation)
+        } else {
+            raw
+        }
 
         fun trimUnmatchedClosing(open: Char, close: Char) {
             while (
                 value.endsWith(close) &&
                 value.count { it == close } > value.count { it == open }
             ) {
-                value = value.dropLast(1).trimEnd(*sharedTextPunctuation)
+                value = value.dropLast(1)
+                if (trimSentencePunctuation) {
+                    value = value.trimEnd(*sharedTextPunctuation)
+                }
             }
         }
 

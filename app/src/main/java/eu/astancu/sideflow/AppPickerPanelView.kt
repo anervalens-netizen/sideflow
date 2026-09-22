@@ -329,7 +329,7 @@ class AppPickerPanelView @JvmOverloads constructor(
         drawable.cornerRadius = finalRadius * density
 
         if (preset != AppearancePresetKey.CUSTOM) {
-            val content = if (panelPrefs.panelUsesDarkContent()) Color.BLACK else Color.WHITE
+            val content = if (panelPrefs.pickerUsesDarkContent()) Color.BLACK else Color.WHITE
             drawable.setStroke(
                 (1 * density).toInt(),
                 androidx.core.graphics.ColorUtils.setAlphaComponent(content, 48)
@@ -349,7 +349,7 @@ class AppPickerPanelView @JvmOverloads constructor(
         pickerPanelCard.background = drawable
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) pickerPanelCard.clipToOutline = true
 
-        val lightPanel = panelPrefs.panelUsesDarkContent()
+        val lightPanel = panelPrefs.pickerUsesDarkContent()
         val textColor = if (lightPanel) Color.parseColor("#1E293B") else Color.WHITE
         val subTextColor = if (lightPanel) Color.parseColor("#64748B") else Color.parseColor("#B3FFFFFF")
 
@@ -389,7 +389,7 @@ class AppPickerPanelView @JvmOverloads constructor(
         tvHeader.text = if (isEditMode) "Manage SideFlow" else "All Apps"
         btnEdit.text = if (isEditMode) "DONE" else "EDIT"
         
-        val lightPanel = panelPrefs.panelUsesDarkContent()
+        val lightPanel = panelPrefs.pickerUsesDarkContent()
         val accentColor = resolvedPickerAccentColor(lightPanel)
         val inactiveColor = if (lightPanel) Color.parseColor("#64748B") else Color.parseColor("#B3FFFFFF")
         btnEdit.setTextColor(if (isEditMode) accentColor else inactiveColor)
@@ -410,7 +410,7 @@ class AppPickerPanelView @JvmOverloads constructor(
     }
 
     private fun updateTypeToggleUI() {
-        val lightPanel = panelPrefs.panelUsesDarkContent()
+        val lightPanel = panelPrefs.pickerUsesDarkContent()
         val accentColor = resolvedPickerAccentColor(lightPanel)
         val selectedBg = androidx.core.graphics.ColorUtils.setAlphaComponent(accentColor, if (lightPanel) 28 else 38)
         val selectedText = accentColor

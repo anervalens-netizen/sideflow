@@ -227,17 +227,13 @@ class PanelAppsAdapter(
             val baseTextSize = if (isRich) 9f else 8f
 
             val requestedIconDp = (baseIconSize * scale).toInt()
-            val fittedIconDp = if (compactMode) {
-                requestedIconDp
-            } else {
-                SideFlowPolicy.fitIconSizeDp(
-                    panelWidthDp = availablePanelWidthDp,
-                    columns = effectiveColumns,
-                    requestedIconDp = requestedIconDp,
-                    itemGapDp = panelPrefs.itemGapDp,
-                    contentHorizontalPaddingDp = if (isRich) 8 else 0
-                )
-            }
+            val fittedIconDp = SideFlowPolicy.fitIconSizeDp(
+                panelWidthDp = availablePanelWidthDp,
+                columns = effectiveColumns,
+                requestedIconDp = requestedIconDp,
+                itemGapDp = panelPrefs.itemGapDp,
+                contentHorizontalPaddingDp = if (isRich) 8 else 0
+            )
             holder.ivIcon.layoutParams.let { lp ->
                 lp.width = context.dpToPx(fittedIconDp)
                 lp.height = context.dpToPx(fittedIconDp)

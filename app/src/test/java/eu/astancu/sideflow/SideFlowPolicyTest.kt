@@ -69,6 +69,29 @@ class SideFlowPolicyTest {
     }
 
     @Test
+    fun compactPanelIconsFitActualCollapsedWidth() {
+        assertEquals(
+            65,
+            SideFlowPolicy.fitIconSizeDp(
+                panelWidthDp = SideFlowPolicy.PICKER_COLLAPSED_PANEL_WIDTH_DP,
+                columns = 1,
+                requestedIconDp = 88,
+                itemGapDp = 6
+            )
+        )
+        assertEquals(
+            57,
+            SideFlowPolicy.fitIconSizeDp(
+                panelWidthDp = SideFlowPolicy.PICKER_COLLAPSED_PANEL_WIDTH_DP,
+                columns = 1,
+                requestedIconDp = 96,
+                itemGapDp = 6,
+                contentHorizontalPaddingDp = 8
+            )
+        )
+    }
+
+    @Test
     fun blurAmountStaysInsideSliderRange() {
         assertEquals(5, SideFlowPolicy.sanitizeBlurAmount(0))
         assertEquals(28, SideFlowPolicy.sanitizeBlurAmount(28))

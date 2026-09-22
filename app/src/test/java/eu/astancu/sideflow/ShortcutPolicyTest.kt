@@ -45,6 +45,30 @@ class ShortcutPolicyTest {
     }
 
     @Test
+    fun standaloneSharedUrlPreservesValidTrailingPunctuation() {
+        assertEquals(
+            "https://example.com/path!",
+            ShortcutPolicy.extractTarget("https://example.com/path!")
+        )
+        assertEquals(
+            "https://example.com/path,",
+            ShortcutPolicy.extractTarget("https://example.com/path,")
+        )
+        assertEquals(
+            "https://example.com/path.",
+            ShortcutPolicy.extractTarget("https://example.com/path.")
+        )
+    }
+
+    @Test
+    fun proseSharedUrlStillDropsSentencePunctuation() {
+        assertEquals(
+            "https://example.com/path",
+            ShortcutPolicy.extractTarget("Open https://example.com/path!")
+        )
+    }
+
+    @Test
     fun supportsIntentAndCustomSchemeDeepLinks() {
         assertEquals(
             ShelfItemType.DEEP_LINK,

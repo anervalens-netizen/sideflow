@@ -225,6 +225,24 @@ Codex reviewed 66674cad and completed with one P2 finding. It is remediated loca
 - git diff --check: **PASS**.
 - P4 remains draft/unmerged; another Codex review is required on the resulting exact HEAD.
 
+## PR #6 — review round 8 (Codex + AI PR review)
+
+The review pass on 9b515f7 exposed one additional Codex P2 and three P2 findings from the repository AI PR review connector. All four are remediated locally in the next commit; fresh exact-head review remains mandatory before P4 merge.
+
+| ID | Source | Severity | Finding | Current assessment | Remediation evidence |
+| --- | --- | --- | --- | --- | --- |
+| r4072576974 | Codex | P2 | Picker derives contrast from side-panel Invisible Background state even though picker card remains visible | **RESOLVED (local)** | PanelPreferences now exposes picker-specific rendered-surface contrast that ignores side-panel hideBackground while preserving alpha/luminance/Realme rules; all picker contrast paths use it. |
+| r4072793683 | AI PR review | P2 | Folder child can be added again at root because membership/removal are top-level only | **RESOLVED (local)** | Panel membership/notification filtering now enumerate recursive shelf items; add/remove identity cleanup is recursive, preventing a nested item from coexisting as a duplicate root item. Regressions cover recursive membership, move-to-root uniqueness and recursive removal. |
+| r4072793691 | AI PR review | P2 | Shared standalone URLs lose valid trailing ! , or . characters | **RESOLVED (local)** | Shared-target extraction distinguishes standalone URI payloads from surrounding prose: standalone valid URI punctuation is preserved, while sentence punctuation is still trimmed from prose links. Regressions cover !, comma, period and prose punctuation. |
+| r4072793695 | AI PR review | P2 | Compact picker mode bypasses fitting and can overflow the 88dp collapsed panel | **RESOLVED (local)** | Icon fitting now uses actual available width (including widths below the user panel minimum), accepts one-column compact layout, and runs in compact mode too. Regressions cover 88dp normal/rich collapsed widths. |
+
+### Round-8 local validation
+
+- Gradle testDebugUnitTest + assembleDebug: **PASS**.
+- Unit tests: **57/57 PASS**.
+- git diff --check: **PASS**.
+- P4 remains draft/unmerged; fresh Codex/repository review is required on the resulting exact HEAD.
+
 ## Mandatory remediation order
 
 1. **Privacy / misleading UI first:** PR #2 donation UI, backup filename ignore, PR #5 Auto Backup and export warning.

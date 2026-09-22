@@ -250,6 +250,87 @@ class ShelfConfigTest {
     }
 
     @Test
+    fun recursiveFolderMembershipPreventsDuplicateRootAdd() {
+        val nestedApp = ShelfItem(
+            id = "nested-app",
+            type = ShelfItemType.APP,
+            reference = "com.example.shared"
+        )
+        val config = ShelfConfig(
+            sections = listOf(
+                ShelfSection(
+                    id = "apps",
+                    title = "Apps",
+                    items = listOf(
+                        ShelfItem(
+                            id = "folder",
+                            type = ShelfItemType.FOLDER,
+                            reference = "sideflow.folder.saved",
+                            children = listOf(nestedApp)
+                        )
+                    )
+                )
+            )
+        )
+
+        assertTrue(
+            ShelfConfigOps.allItemsRecursive(config)
+                .any { it.reference == "com.example.shared" }
+        )
+
+        val movedToRoot = ShelfConfigOps.addItem(
+            config,
+            ShelfItem(
+                id = "new-root-id",
+                type = ShelfItemType.APP,
+                reference = "com.example.shared"
+            )
+        )
+        val matching = ShelfConfigOps.allItemsRecursive(movedToRoot)
+            .filter { it.reference == "com.example.shared" }
+        assertEquals(1, matching.size)
+        assertEquals("new-root-id", matching.single().id)
+        assertTrue(
+            movedToRoot.sections.single().items
+                .first { it.type == ShelfItemType.FOLDER }
+                .children
+                .none { it.reference == "com.example.shared" }
+        )
+    }
+
+    @Test
+    fun recursiveRemoveCanRemoveFolderChildByIdentity() {
+        val config = ShelfConfig(
+            sections = listOf(
+                ShelfSection(
+                    id = "apps",
+                    title = "Apps",
+                    items = listOf(
+                        ShelfItem(
+                            id = "folder",
+                            type = ShelfItemType.FOLDER,
+                            reference = "sideflow.folder.saved",
+                            children = listOf(
+                                ShelfItem(
+                                    id = "nested-app",
+                                    type = ShelfItemType.APP,
+                                    reference = "com.example.shared"
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+
+        val removed = ShelfConfigOps.removeItem(config, "APP:com.example.shared")
+        assertTrue(
+            ShelfConfigOps.allItemsRecursive(removed)
+                .none { it.reference == "com.example.shared" }
+        )
+    }
+
+    @Test
     fun normalizationMakesItemIdsGloballyUniqueIncludingFolderChildren() {
         val config = ShelfConfig(
             sections = listOf(

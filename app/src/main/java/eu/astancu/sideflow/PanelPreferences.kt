@@ -752,18 +752,24 @@ class PanelPreferences(context: Context) {
             .getOrDefault(android.graphics.Color.parseColor(DEFAULT_ACCENT_COLOR))
     }
 
-    fun panelUsesDarkContent(): Boolean {
+    private fun renderedSurfaceUsesDarkContent(surfaceHidden: Boolean): Boolean {
         val resolved = resolvedPanelBackgroundColor()
         val opaque = androidx.core.graphics.ColorUtils.setAlphaComponent(resolved, 255)
         val surfaceIsLight = androidx.core.graphics.ColorUtils.calculateLuminance(opaque) >= 0.6
         return SideFlowPolicy.shouldUseDarkContentForSurface(
             surfaceIsLight = surfaceIsLight,
             effectiveAlpha = android.graphics.Color.alpha(resolved),
-            hideBackground = hideBackground,
+            hideBackground = surfaceHidden,
             forceDarkSurface = appearancePreset == AppearancePresetKey.CUSTOM &&
                 uiTheme == THEME_REALME
         )
     }
+
+    fun panelUsesDarkContent(): Boolean =
+        renderedSurfaceUsesDarkContent(surfaceHidden = hideBackground)
+
+    fun pickerUsesDarkContent(): Boolean =
+        renderedSurfaceUsesDarkContent(surfaceHidden = false)
 
     var panelCornerRadius: Int
         get() = SideFlowPolicy.sanitizePanelRadiusDp(prefs.getInt(KEY_PANEL_RADIUS, DEFAULT_PANEL_RADIUS))
@@ -947,7 +953,7 @@ class PanelPreferences(context: Context) {
     }
 
     fun getPanelApps(): List<String> =
-        ShelfConfigOps.allItems(getShelfConfig()).map { it.reference }
+        ShelfConfigOps.allItemsRecursive(getShelfConfig()).map { it.reference }
 
     fun setPanelApps(identifiers: List<String>) {
         setShelfConfig(

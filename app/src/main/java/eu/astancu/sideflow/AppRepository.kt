@@ -278,7 +278,7 @@ class AppRepository(context: Context) {
         val entries = mutableListOf<AppInfo>()
 
         if (panelPrefs.showNotificationApps) {
-            val pinned = ShelfConfigOps.allItems(config).map { it.reference }.toSet()
+            val pinned = ShelfConfigOps.allItemsRecursive(config).map { it.reference }.toSet()
             val notificationPackages = NotificationTrackingService
                 .getActiveNotificationPackages()
                 .filterNot { it in pinned }
