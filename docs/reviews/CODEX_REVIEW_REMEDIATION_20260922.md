@@ -210,6 +210,21 @@ Codex reviewed 5cf70ef9 and completed with two P2 findings. Both are remediated 
 - git diff --check: **PASS**.
 - P4 remains draft/unmerged; another Codex review is required on the resulting exact HEAD.
 
+## PR #6 — fresh R0/P4 review round 7
+
+Codex reviewed 66674cad and completed with one P2 finding. It is remediated locally in the next commit; another exact-head review is mandatory.
+
+| ID | Severity | Finding | Current assessment | Remediation evidence |
+| --- | --- | --- | --- | --- |
+| r4072426697 | P2 | Panel Opacity scales a stored alpha, so 100% can still render at 90% and 50% at ~45% | **RESOLVED (local)** | Opacity is now the final rendered alpha and ignores any historical alpha embedded in the stored RGB color; regressions cover opaque, 0x80, 0x33 and legacy #E6 inputs at 10/50/100%. |
+
+### PR #6 round-7 local validation
+
+- Gradle testDebugUnitTest + assembleDebug: **PASS**.
+- Unit tests: **52/52 PASS**.
+- git diff --check: **PASS**.
+- P4 remains draft/unmerged; another Codex review is required on the resulting exact HEAD.
+
 ## Mandatory remediation order
 
 1. **Privacy / misleading UI first:** PR #2 donation UI, backup filename ignore, PR #5 Auto Backup and export warning.

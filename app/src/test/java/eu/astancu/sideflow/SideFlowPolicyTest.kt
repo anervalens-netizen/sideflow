@@ -133,10 +133,12 @@ class SideFlowPolicyTest {
     }
 
     @Test
-    fun panelOpacityScalesExistingBackgroundAlpha() {
+    fun panelOpacityIsTheFinalBackgroundAlpha() {
         assertEquals(0x80112233.toInt(), SideFlowPolicy.applyOpacityToArgb(0xFF112233.toInt(), 50))
-        assertEquals(0x40112233.toInt(), SideFlowPolicy.applyOpacityToArgb(0x80112233.toInt(), 50))
-        assertEquals(0x1A112233.toInt(), SideFlowPolicy.applyOpacityToArgb(0x33112233.toInt(), 50))
+        assertEquals(0x80112233.toInt(), SideFlowPolicy.applyOpacityToArgb(0x80112233.toInt(), 50))
+        assertEquals(0x80112233.toInt(), SideFlowPolicy.applyOpacityToArgb(0x33112233.toInt(), 50))
+        assertEquals(0xFF112233.toInt(), SideFlowPolicy.applyOpacityToArgb(0xE6112233.toInt(), 100))
+        assertEquals(0x1A112233.toInt(), SideFlowPolicy.applyOpacityToArgb(0xE6112233.toInt(), 10))
     }
 
     @Test

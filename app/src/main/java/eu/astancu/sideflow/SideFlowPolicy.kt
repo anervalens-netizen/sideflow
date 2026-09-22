@@ -108,10 +108,9 @@ object SideFlowPolicy {
     }
 
     fun applyOpacityToArgb(argb: Int, opacityPercent: Int): Int {
-        val baseAlpha = (argb ushr 24) and 0xFF
         val opacity = sanitizePanelOpacity(opacityPercent)
-        val scaledAlpha = (baseAlpha * opacity + 50) / 100
-        return (argb and 0x00FFFFFF) or (scaledAlpha shl 24)
+        val finalAlpha = (255 * opacity + 50) / 100
+        return (argb and 0x00FFFFFF) or (finalAlpha shl 24)
     }
 
     /**
