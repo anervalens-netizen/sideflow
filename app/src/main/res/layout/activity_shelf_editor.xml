@@ -44,10 +44,28 @@
             android:paddingBottom="12dp" />
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnAddSection"
+            android:id="@+id/btnAddShortcut"
             style="@style/Widget.Material3.Button"
             android:layout_width="match_parent"
             android:layout_height="56dp"
+            android:text="Add link / shortcut"
+            app:cornerRadius="@dimen/app_button_radius" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnManageShortcuts"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="8dp"
+            android:text="Manage shortcuts"
+            app:cornerRadius="@dimen/app_button_radius" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnAddSection"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="8dp"
             android:text="Add section"
             app:cornerRadius="@dimen/app_button_radius" />
 

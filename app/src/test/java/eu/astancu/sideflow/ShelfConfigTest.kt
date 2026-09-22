@@ -161,6 +161,40 @@ class ShelfConfigTest {
     }
 
     @Test
+    fun updatingShortcutKeepsStableIdAndCanMoveSections() {
+        val original = ShelfItem(
+            id = "shortcut-1",
+            type = ShelfItemType.URL,
+            reference = "https://old.example",
+            label = "Old"
+        )
+        val config = ShelfConfig(
+            sections = listOf(
+                ShelfSection("a", "A", items = listOf(original)),
+                ShelfSection("b", "B")
+            )
+        )
+
+        val updated = ShelfConfigOps.updateItem(
+            config,
+            itemId = "shortcut-1",
+            replacement = ShelfItem(
+                id = "ignored",
+                type = ShelfItemType.URL,
+                reference = "https://new.example",
+                label = "New",
+                iconPackage = "com.example.icon"
+            ),
+            targetSectionId = "b"
+        )
+
+        assertEquals(emptyList<String>(), updated.sections[0].items.map { it.id })
+        assertEquals("shortcut-1", updated.sections[1].items.single().id)
+        assertEquals("New", updated.sections[1].items.single().label)
+        assertEquals("com.example.icon", updated.sections[1].items.single().iconPackage)
+    }
+
+    @Test
     fun unsupportedJsonVersionFailsSafely() {
         assertFalse(ShelfConfigJson.decode("{\"version\":99,\"sections\":[]}") != null)
     }

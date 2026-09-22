@@ -830,6 +830,20 @@ class PanelPreferences(context: Context) {
         setShelfConfig(ShelfConfigOps.removeItem(getShelfConfig(), itemId))
     }
 
+    fun getShelfItem(itemId: String): ShelfItem? =
+        ShelfConfigOps.findItem(getShelfConfig(), itemId)
+
+    fun updateShelfItem(itemId: String, item: ShelfItem, sectionId: String? = null) {
+        setShelfConfig(
+            ShelfConfigOps.updateItem(
+                getShelfConfig(),
+                itemId,
+                item,
+                targetSectionId = sectionId
+            )
+        )
+    }
+
     fun updateSection(
         sectionId: String,
         title: String? = null,

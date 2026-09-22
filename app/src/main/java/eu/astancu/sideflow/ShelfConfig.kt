@@ -276,6 +276,47 @@ object ShelfConfigOps {
         return normalize(normalized.copy(sections = sections))
     }
 
+    fun updateItem(
+        config: ShelfConfig,
+        itemId: String,
+        replacement: ShelfItem,
+        targetSectionId: String? = null
+    ): ShelfConfig {
+        val normalized = normalize(config)
+        val sourceSection = normalized.sections.firstOrNull { section ->
+            section.items.any { it.id == itemId }
+        } ?: return normalized
+
+        val originalIndex = sourceSection.items.indexOfFirst { it.id == itemId }
+        val destinationId = targetSectionId
+            ?.takeIf { id -> normalized.sections.any { it.id == id } }
+            ?: sourceSection.id
+
+        val replacementWithStableId = replacement.copy(id = itemId)
+        var without = normalized.copy(
+            sections = normalized.sections.map { section ->
+                section.copy(items = section.items.filterNot { it.id == itemId })
+            }
+        )
+
+        // Enforce the same identity uniqueness rule as addItem.
+        without = removeItem(without, replacementWithStableId.identityKey)
+
+        val sections = without.sections.map { section ->
+            if (section.id != destinationId) return@map section
+            val items = section.items.toMutableList()
+            val index = if (destinationId == sourceSection.id) {
+                originalIndex.coerceIn(0, items.size)
+            } else {
+                items.size
+            }
+            items.add(index, replacementWithStableId)
+            section.copy(items = items)
+        }
+
+        return normalize(without.copy(sections = sections))
+    }
+
     fun findItem(config: ShelfConfig, itemId: String): ShelfItem? =
         normalize(config).sections.asSequence()
             .flatMap { it.items.asSequence() }

@@ -90,6 +90,7 @@ class SettingsMainActivity : AppCompatActivity() {
 
         // Add static actions that aren't in standard layouts
         allSettings.add(SettingItem(getString(R.string.section_shelf), getString(R.string.main_menu_shelf_desc), "Shelf", "sections groups columns order organize shelf", ShelfEditorActivity::class.java))
+        allSettings.add(SettingItem("Add link / shortcut", "Save a URL or deep link in the SideFlow shelf", "Shelf", "link url shortcut chat conversation deep link share", ShortcutEditorActivity::class.java))
         allSettings.add(SettingItem(getString(R.string.add_apps), getString(R.string.manage_apps_desc), getString(R.string.misc_section_general), "apps choose select picker manage add remove", AppPickerActivity::class.java))
         allSettings.add(SettingItem(getString(R.string.view_repo_title), getString(R.string.view_repo_desc), "Project", "github source code open repo smartedge", SettingsMainActivity::class.java, "btnGithubTop"))
         allSettings.add(SettingItem(getString(R.string.btn_reset), getString(R.string.reset_defaults_desc), getString(R.string.misc_section_general), "reset all factory wipe restore settings", SettingsMainActivity::class.java, "btnReset"))

@@ -40,6 +40,14 @@ class ShelfEditorActivity : AppCompatActivity() {
         binding.rvSections.layoutManager = LinearLayoutManager(this)
         binding.rvSections.adapter = adapter
 
+        binding.btnAddShortcut.setOnClickListener {
+            startActivity(Intent(this, ShortcutEditorActivity::class.java))
+        }
+
+        binding.btnManageShortcuts.setOnClickListener {
+            showShortcutManager()
+        }
+
         binding.btnAddSection.setOnClickListener {
             val index = prefs.getShelfConfig().sections.size + 1
             val sectionId = prefs.addSection("Section $index")
@@ -135,6 +143,36 @@ class ShelfEditorActivity : AppCompatActivity() {
         }
 
         dialog.show()
+    }
+
+    private fun showShortcutManager() {
+        val config = prefs.getShelfConfig()
+        val entries = config.sections.flatMap { section ->
+            section.items
+                .filter { it.type == ShelfItemType.URL || it.type == ShelfItemType.DEEP_LINK }
+                .map { item -> section to item }
+        }
+
+        if (entries.isEmpty()) {
+            binding.root.showModernToast("No link shortcuts yet")
+            return
+        }
+
+        val labels = entries.map { (section, item) ->
+            "${item.label ?: ShortcutPolicy.suggestedLabel(item.reference)}  •  ${section.title}"
+        }.toTypedArray()
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Manage shortcuts")
+            .setItems(labels) { _, which ->
+                val item = entries[which].second
+                startActivity(
+                    Intent(this, ShortcutEditorActivity::class.java)
+                        .putExtra(ShortcutEditorActivity.EXTRA_ITEM_ID, item.id)
+                )
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     private fun deleteSection(section: ShelfSection) {
