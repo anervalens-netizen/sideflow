@@ -106,6 +106,22 @@ class SideFlowPolicyTest {
         assertFalse(SideFlowPolicy.shouldUseDarkContentForSurface(true, 191, false))
         assertFalse(SideFlowPolicy.shouldUseDarkContentForSurface(false, 255, false))
         assertFalse(SideFlowPolicy.shouldUseDarkContentForSurface(true, 255, true))
+        assertFalse(
+            SideFlowPolicy.shouldUseDarkContentForSurface(
+                surfaceIsLight = true,
+                effectiveAlpha = 255,
+                hideBackground = false,
+                forceDarkSurface = true
+            )
+        )
+    }
+
+    @Test
+    fun legacyOnlyEmptyShelfStateIsUninitialized() {
+        assertFalse(SideFlowPolicy.hasShelfConfiguration(false, false, false))
+        assertFalse(SideFlowPolicy.hasShelfConfiguration(false, true, false))
+        assertTrue(SideFlowPolicy.hasShelfConfiguration(false, true, true))
+        assertTrue(SideFlowPolicy.hasShelfConfiguration(true, true, false))
     }
 
     @Test

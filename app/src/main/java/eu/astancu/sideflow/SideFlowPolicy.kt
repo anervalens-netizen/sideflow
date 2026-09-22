@@ -88,9 +88,13 @@ object SideFlowPolicy {
     fun shouldUseDarkContentForSurface(
         surfaceIsLight: Boolean,
         effectiveAlpha: Int,
-        hideBackground: Boolean
+        hideBackground: Boolean,
+        forceDarkSurface: Boolean = false
     ): Boolean =
-        !hideBackground && effectiveAlpha.coerceIn(0, 255) >= 192 && surfaceIsLight
+        !forceDarkSurface &&
+            !hideBackground &&
+            effectiveAlpha.coerceIn(0, 255) >= 192 &&
+            surfaceIsLight
 
     fun applyOpacityToArgb(argb: Int, opacityPercent: Int): Int {
         val baseAlpha = (argb ushr 24) and 0xFF
@@ -185,6 +189,13 @@ object SideFlowPolicy {
             }
         }
     }
+
+    fun hasShelfConfiguration(
+        hasStructuredConfig: Boolean,
+        hasLegacyKey: Boolean,
+        hasLegacyItems: Boolean
+    ): Boolean =
+        hasStructuredConfig || (hasLegacyKey && hasLegacyItems)
 
     fun shouldSeedDefaultShelf(hasExistingConfiguration: Boolean): Boolean =
         !hasExistingConfiguration

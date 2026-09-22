@@ -759,7 +759,9 @@ class PanelPreferences(context: Context) {
         return SideFlowPolicy.shouldUseDarkContentForSurface(
             surfaceIsLight = surfaceIsLight,
             effectiveAlpha = android.graphics.Color.alpha(resolved),
-            hideBackground = hideBackground
+            hideBackground = hideBackground,
+            forceDarkSurface = appearancePreset == AppearancePresetKey.CUSTOM &&
+                uiTheme == THEME_REALME
         )
     }
 
@@ -898,20 +900,25 @@ class PanelPreferences(context: Context) {
         get() = "shape:$iconShape|pack:$selectedIconPack|theme:$uiTheme"
 
     fun hasShelfConfiguration(): Boolean =
-        prefs.contains(KEY_SHELF_CONFIG) || prefs.contains(KEY_PANEL_APPS)
+        SideFlowPolicy.hasShelfConfiguration(
+            hasStructuredConfig = prefs.contains(KEY_SHELF_CONFIG),
+            hasLegacyKey = prefs.contains(KEY_PANEL_APPS),
+            hasLegacyItems = readLegacyPanelApps().isNotEmpty()
+        )
 
     fun getShelfConfig(): ShelfConfig {
         val stored = prefs.getString(KEY_SHELF_CONFIG, null)
         val decoded = stored?.let(ShelfConfigJson::decode)
         if (decoded != null) return decoded
 
-        val hasLegacyConfig = prefs.contains(KEY_PANEL_APPS)
+        val legacyIdentifiers = readLegacyPanelApps()
+        val hasLegacyConfig = prefs.contains(KEY_PANEL_APPS) && legacyIdentifiers.isNotEmpty()
         val migrated = ShelfConfigOps.fromLegacyIdentifiers(
-            identifiers = readLegacyPanelApps(),
+            identifiers = legacyIdentifiers,
             columns = panelColumns
         )
-        // Reading preferences on a fresh install must not mark an empty shelf
-        // as user-configured before the service gets a chance to seed defaults.
+        // A legacy-only empty key is pre-fix reset residue, not an intentional
+        // empty structured shelf. Do not persist it before default seeding.
         if (hasLegacyConfig) {
             setShelfConfig(migrated)
         }

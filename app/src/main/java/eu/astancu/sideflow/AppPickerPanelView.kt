@@ -40,11 +40,10 @@ class AppPickerPanelView @JvmOverloads constructor(
     private val btnSettings: ImageButton
     private val btnEdit: TextView
     private val tvHeader: TextView
+    private val panelPrefs = PanelPreferences(context)
+    private val repository = AppRepository(context)
     private val adapter = PickerAdapter()
     private val notificationAdapter = PickerAdapter()
-    
-    private val repository = AppRepository(context)
-    private val panelPrefs = PanelPreferences(context)
     private var allApps = listOf<AppInfo>()
     var isEditMode = false
         private set

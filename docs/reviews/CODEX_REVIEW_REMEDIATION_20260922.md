@@ -177,6 +177,23 @@ Codex reviewed 71b84f49 and completed with three additional P2 findings. All thr
 - git diff --check: **PASS**.
 - P4 remains draft/unmerged; another Codex review is required on the resulting exact HEAD.
 
+## PR #6 — fresh R0/P4 review round 5
+
+Codex reviewed b9f3eb2 and completed with one P1 and two P2 findings. All three are remediated locally in the next commit; another exact-head review is mandatory.
+
+| ID | Severity | Finding | Current assessment | Remediation evidence |
+| --- | --- | --- | --- | --- |
+| r4071774272 | P2 | Legacy-only empty reset marker suppresses default seeding after upgrade | **RESOLVED (local)** | Shelf-presence policy now treats an empty legacy-only panel-apps key as uninitialized while preserving intentional structured empty shelves; regression covers all combinations. |
+| r4071774280 | P1 | Picker adapters initialize before panelPrefs and can crash service startup | **RESOLVED (local)** | AppPickerPanelView initializes PanelPreferences and repository before constructing adapters, so adapter accent initialization cannot dereference an uninitialized preference field. |
+| r4071774283 | P2 | Realme renders a dark gradient but content tint can be derived from a light stored custom color | **RESOLVED (local)** | Central contrast policy now supports forced-dark rendered surfaces; Custom + Realme always chooses light content while preserving hidden/alpha rules for other themes. |
+
+### PR #6 round-5 local validation
+
+- Gradle testDebugUnitTest + assembleDebug: **PASS**.
+- Unit tests: **51/51 PASS**.
+- git diff --check: **PASS**.
+- P4 remains draft/unmerged; another Codex review is required on the resulting exact HEAD.
+
 ## Mandatory remediation order
 
 1. **Privacy / misleading UI first:** PR #2 donation UI, backup filename ignore, PR #5 Auto Backup and export warning.
