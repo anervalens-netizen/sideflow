@@ -66,6 +66,14 @@ class ShortcutPolicyTest {
             "https://example.com/path",
             ShortcutPolicy.extractTarget("Open https://example.com/path!")
         )
+        assertEquals(
+            "https://example.com/page",
+            ShortcutPolicy.extractTarget("Have you seen https://example.com/page?")
+        )
+        assertEquals(
+            "https://example.com/page?",
+            ShortcutPolicy.extractTarget("https://example.com/page?")
+        )
     }
 
     @Test

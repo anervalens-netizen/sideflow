@@ -2,7 +2,7 @@ package eu.astancu.sideflow
 
 object ShortcutPolicy {
     private val uriPattern = Regex("""(?i)(?:https?://|www\.|intent:|[a-z][a-z0-9+.-]*:)[^\s<>"']+""")
-    private val sharedTextPunctuation = charArrayOf('.', ',', '!')
+    private val sharedTextPunctuation = charArrayOf('.', ',', '!', '?')
 
     fun extractTarget(sharedText: String?): String? {
         val text = sharedText?.trim().orEmpty()

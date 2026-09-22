@@ -31,6 +31,7 @@
             android:paddingHorizontal="16dp">
 
             <ImageView
+                android:id="@+id/ivPickerSearch"
                 android:layout_width="18dp"
                 android:layout_height="18dp"
                 android:src="@android:drawable/ic_menu_search"
@@ -162,6 +163,7 @@
             android:layout_marginBottom="4dp">
             
             <TextView
+                android:id="@+id/tvPickerNotificationsTitle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"

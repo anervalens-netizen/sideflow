@@ -359,6 +359,22 @@ class AppPickerPanelView @JvmOverloads constructor(
         etSearch.setTextColor(textColor)
         etSearch.setHintTextColor(subTextColor)
 
+        val fixedControlTint = android.content.res.ColorStateList.valueOf(subTextColor)
+        findViewById<ImageView>(R.id.ivPickerSearch).imageTintList = fixedControlTint
+        btnSettings.imageTintList = fixedControlTint
+        findViewById<TextView>(R.id.tvPickerNotificationsTitle).setTextColor(subTextColor)
+        findViewById<ImageView>(R.id.ivNotificationsChevron).imageTintList = fixedControlTint
+        findViewById<View>(R.id.divNotifications).backgroundTintList =
+            android.content.res.ColorStateList.valueOf(
+                if (lightPanel) Color.parseColor("#1A000000") else Color.parseColor("#1AFFFFFF")
+            )
+
+        val controlBackground = android.content.res.ColorStateList.valueOf(
+            if (lightPanel) Color.parseColor("#14000000") else Color.parseColor("#1AFFFFFF")
+        )
+        btnSettings.backgroundTintList = controlBackground
+        btnEdit.backgroundTintList = controlBackground
+
         val searchBg = findViewById<View>(R.id.etPickerSearch).parent as? View
         searchBg?.let {
             val sd = android.graphics.drawable.GradientDrawable().apply {

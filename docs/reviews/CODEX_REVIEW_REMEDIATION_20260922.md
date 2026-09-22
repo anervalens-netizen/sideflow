@@ -243,6 +243,22 @@ The review pass on 9b515f7 exposed one additional Codex P2 and three P2 findings
 - git diff --check: **PASS**.
 - P4 remains draft/unmerged; fresh Codex/repository review is required on the resulting exact HEAD.
 
+## PR #6 — Codex review round 9
+
+Codex reviewed 9ffe91fd and completed with two additional P2 findings. Both are remediated locally in the next commit; fresh exact-head review remains mandatory.
+
+| ID | Severity | Finding | Current assessment | Remediation evidence |
+| --- | --- | --- | --- | --- |
+| r4074460003 | P2 | Question marks from shared prose can be captured as an empty-query suffix | **RESOLVED (local)** | Prose cleanup now treats `?` like the other sentence punctuation while standalone shared URIs preserve a legitimate trailing `?`; regression covers both cases. |
+| r4074460010 | P2 | Fixed picker controls stay translucent-white on light presets | **RESOLVED (local)** | Search icon, settings cog/background, notification heading, chevron, divider and edit-chip background now follow the same light/dark picker tint policy as text and rows. |
+
+### Round-9 local validation
+
+- Gradle testDebugUnitTest + assembleDebug: **PASS**.
+- Unit tests: **57/57 PASS**.
+- git diff --check: **PASS**.
+- P4 remains draft/unmerged; fresh Codex review is required on the resulting exact HEAD.
+
 ## Mandatory remediation order
 
 1. **Privacy / misleading UI first:** PR #2 donation UI, backup filename ignore, PR #5 Auto Backup and export warning.
