@@ -53,6 +53,28 @@ class SideFlowPolicyTest {
         )
     }
 
+
+    @Test
+    fun richIconsAccountForRecyclerAndInnerPadding() {
+        assertEquals(
+            12,
+            SideFlowPolicy.fitIconSizeDp(
+                panelWidthDp = 180,
+                columns = 6,
+                requestedIconDp = 44,
+                itemGapDp = 6,
+                contentHorizontalPaddingDp = 8
+            )
+        )
+    }
+
+    @Test
+    fun blurAmountStaysInsideSliderRange() {
+        assertEquals(5, SideFlowPolicy.sanitizeBlurAmount(0))
+        assertEquals(28, SideFlowPolicy.sanitizeBlurAmount(28))
+        assertEquals(50, SideFlowPolicy.sanitizeBlurAmount(99))
+    }
+
     @Test
     fun downwardHeaderDropAccountsForSourceRemoval() {
         assertEquals(

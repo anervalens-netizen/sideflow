@@ -184,6 +184,7 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         }
 
         binding.btnResetRadius.setOnClickListener {
+            markCustomPreset()
             val default = 20
             panelPrefs.panelCornerRadius = default
             binding.sbPanelRadius.value = default.toFloat()

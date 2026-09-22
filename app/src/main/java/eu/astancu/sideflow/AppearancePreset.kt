@@ -43,7 +43,7 @@ object AppearancePresetCatalog {
         key = AppearancePresetKey.AMOLED,
         backgroundColor = "#FF000000",
         blurEnabled = false,
-        blurAmount = 0,
+        blurAmount = SideFlowPolicy.MIN_BLUR_AMOUNT,
         cornerRadiusDp = 24
     )
 

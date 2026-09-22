@@ -229,7 +229,8 @@ class PanelAppsAdapter(
                     panelWidthDp = availablePanelWidthDp,
                     columns = effectiveColumns,
                     requestedIconDp = requestedIconDp,
-                    itemGapDp = panelPrefs.itemGapDp
+                    itemGapDp = panelPrefs.itemGapDp,
+                    contentHorizontalPaddingDp = if (isRich) 8 else 0
                 )
             }
             holder.ivIcon.layoutParams.let { lp ->

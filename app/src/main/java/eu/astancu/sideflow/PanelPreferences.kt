@@ -438,7 +438,7 @@ class PanelPreferences(context: Context) {
             putBoolean(KEY_DRAG_TO_SPLIT, true)
             putBoolean(KEY_REMEMBER_SCROLL, false)
             putBoolean(KEY_AUTO_SHOW_KEYBOARD, false)
-            putString(KEY_PANEL_APPS, "")
+            remove(KEY_PANEL_APPS)
             remove(KEY_SHELF_CONFIG)
             putString(KEY_GAME_APPS, "")
             putBoolean(KEY_AUTO_HIDE_FULLSCREEN, false)
@@ -606,8 +606,12 @@ class PanelPreferences(context: Context) {
         set(value) = prefs.edit { putBoolean(KEY_BLUR_ENABLED, value) }
 
     var blurAmount: Int
-        get() = prefs.getInt(KEY_BLUR_AMOUNT, DEFAULT_BLUR_AMOUNT)
-        set(value) = prefs.edit { putInt(KEY_BLUR_AMOUNT, value) }
+        get() = SideFlowPolicy.sanitizeBlurAmount(
+            prefs.getInt(KEY_BLUR_AMOUNT, DEFAULT_BLUR_AMOUNT)
+        )
+        set(value) = prefs.edit {
+            putInt(KEY_BLUR_AMOUNT, SideFlowPolicy.sanitizeBlurAmount(value))
+        }
 
     var panelOpacity: Int
         get() = prefs.getInt(KEY_PANEL_OPACITY, DEFAULT_OPACITY)
@@ -669,8 +673,10 @@ class PanelPreferences(context: Context) {
 
     fun resolvedPanelBackgroundColor(): Int {
         if (appearancePreset == AppearancePresetKey.MATERIAL_YOU) {
+            val dynamicContext = com.google.android.material.color.DynamicColors
+                .wrapContextIfAvailable(appContext)
             val dynamic = com.google.android.material.color.MaterialColors.getColor(
-                appContext,
+                dynamicContext,
                 com.google.android.material.R.attr.colorSurfaceContainer,
                 android.graphics.Color.parseColor(AppearancePresetCatalog.materialYou.backgroundColor)
             )
@@ -692,8 +698,10 @@ class PanelPreferences(context: Context) {
 
     fun resolvedPanelAccentColor(): Int {
         if (!useCustomAccent && appearancePreset == AppearancePresetKey.MATERIAL_YOU) {
+            val dynamicContext = com.google.android.material.color.DynamicColors
+                .wrapContextIfAvailable(appContext)
             return com.google.android.material.color.MaterialColors.getColor(
-                appContext,
+                dynamicContext,
                 com.google.android.material.R.attr.colorPrimary,
                 android.graphics.Color.parseColor(DEFAULT_ACCENT_COLOR)
             )

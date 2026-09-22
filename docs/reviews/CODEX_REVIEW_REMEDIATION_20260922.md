@@ -1,6 +1,6 @@
 # Codex Connector Review Remediation — 2026-09-22
 
-Status: **IMPLEMENTED LOCALLY — fresh Codex review required before P4 merge**
+Status: **SECOND REVIEW ROUND REMEDIATED LOCALLY — another fresh Codex review required before P4 merge**
 Canonical tracker: GitHub Issue #1  
 Reviewed PRs: #2, #3, #4, #5  
 Source: `chatgpt-codex-connector[bot]` GitHub reviews/comments.
@@ -85,6 +85,25 @@ The fixes below are implemented on the P4 branch but **do not authorize merge**.
 - Debug APK assembly: **PASS**.
 - Git diff whitespace check: **PASS**.
 - Project-wide lint remains historically non-clean; the touched-code API-level finding in SplitScreenHelper was guarded after the first lint pass. Existing unrelated manifest/translations/layout/service lint debt is outside R0.
+
+## PR #6 — fresh R0/P4 review round 1
+
+Fresh Codex review of c6350c66 completed on 2026-09-22 and produced five new actionable findings. All five are remediated locally in the next commit; none authorizes P4 merge until a subsequent Codex review is clean.
+
+| ID | Severity | Finding | Current assessment | Remediation evidence |
+| --- | --- | --- | --- | --- |
+| r4070841420 | P2 | Reset All Settings can leave the shelf empty instead of restoring default apps | **RESOLVED (local)** | Reset now removes both shelf-presence keys and SettingsMainActivity explicitly reseeds AppRepository.getTop5Apps() before refresh. |
+| r4070841425 | P2 | Narrow rich-item grid fitting ignores RecyclerView/inner horizontal padding | **RESOLVED (local)** | Fitting now uses usable grid width after 16dp RecyclerView margins and accepts layout-specific inner padding; rich 180dp/6-column regression added. |
+| r4070841433 | P2 | Material You resolves static theme attributes instead of dynamic wallpaper colors | **RESOLVED (local)** | Material surface/accent resolution now uses DynamicColors.wrapContextIfAvailable(appContext) before resolving Material attributes, including service-side preference reads. |
+| r4070841436 | P2 | Reset-radius mutates appearance while leaving named preset active | **RESOLVED (local)** | Radius reset now calls markCustomPreset() before changing the value. |
+| r4070841439 | P1 | AMOLED stores blur 0 below Slider minimum 5 and can crash Appearance | **RESOLVED (local)** | AMOLED keeps blur disabled but stores the valid inactive minimum (5); blur persistence/readback is clamped to 5–50; regression added. |
+
+### PR #6 round-1 local validation
+
+- Gradle testDebugUnitTest + assembleDebug with server Android SDK: **PASS**.
+- Unit tests: **44/44 PASS**.
+- git diff --check: **PASS**.
+- P4 remains draft/WIP; another Codex review is mandatory on the new exact HEAD.
 
 ## Mandatory remediation order
 

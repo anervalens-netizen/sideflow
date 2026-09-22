@@ -19,8 +19,11 @@ object SideFlowPolicy {
     const val MAX_ITEM_GAP_DP = 20
     const val DEFAULT_ITEM_GAP_DP = 6
 
-    private const val MIN_FITTED_ICON_DP = 18
-    private const val CELL_SAFETY_DP = 4
+    const val MIN_BLUR_AMOUNT = 5
+    const val MAX_BLUR_AMOUNT = 50
+
+    private const val PANEL_GRID_HORIZONTAL_INSET_DP = 16
+    private const val CELL_SAFETY_DP = 1
 
     data class WindowBounds(
         val left: Int,
@@ -42,6 +45,9 @@ object SideFlowPolicy {
     fun sanitizeItemGapDp(value: Int): Int =
         value.coerceIn(MIN_ITEM_GAP_DP, MAX_ITEM_GAP_DP)
 
+    fun sanitizeBlurAmount(value: Int): Int =
+        value.coerceIn(MIN_BLUR_AMOUNT, MAX_BLUR_AMOUNT)
+
     /**
      * Keeps an icon inside its actual grid cell even at the narrowest panel /
      * highest-column combination. The requested visual scale is preserved when
@@ -51,14 +57,21 @@ object SideFlowPolicy {
         panelWidthDp: Int,
         columns: Int,
         requestedIconDp: Int,
-        itemGapDp: Int
+        itemGapDp: Int,
+        contentHorizontalPaddingDp: Int = 0
     ): Int {
         val safeColumns = sanitizeColumns(columns)
         val safeWidth = sanitizePanelWidthDp(panelWidthDp)
         val safeGap = sanitizeItemGapDp(itemGapDp)
-        val cellWidth = safeWidth / safeColumns
-        val maxIcon = (cellWidth - safeGap - CELL_SAFETY_DP).coerceAtLeast(MIN_FITTED_ICON_DP)
-        return requestedIconDp.coerceAtLeast(MIN_FITTED_ICON_DP).coerceAtMost(maxIcon)
+        val usableGridWidth = (safeWidth - PANEL_GRID_HORIZONTAL_INSET_DP).coerceAtLeast(safeColumns)
+        val cellWidth = usableGridWidth / safeColumns
+        val maxIcon = (
+            cellWidth -
+                safeGap -
+                contentHorizontalPaddingDp.coerceAtLeast(0) -
+                CELL_SAFETY_DP
+            ).coerceAtLeast(1)
+        return requestedIconDp.coerceAtLeast(1).coerceAtMost(maxIcon)
     }
 
     /**

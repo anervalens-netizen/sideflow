@@ -13,6 +13,8 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import eu.astancu.sideflow.databinding.ActivitySettingsMainBinding
 
 class SettingsMainActivity : AppCompatActivity() {
@@ -240,8 +242,12 @@ class SettingsMainActivity : AppCompatActivity() {
                 .setMessage(R.string.dialog_reset_msg)
                 .setPositiveButton(R.string.btn_reset) { _, _ ->
                     panelPrefs.resetToDefaults()
-                    applyGlobalRefresh()
-                    binding.root.showModernToast(getString(R.string.toast_reset_success))
+                    lifecycleScope.launch {
+                        val defaultApps = AppRepository(this@SettingsMainActivity).getTop5Apps()
+                        panelPrefs.setPanelApps(defaultApps)
+                        applyGlobalRefresh()
+                        binding.root.showModernToast(getString(R.string.toast_reset_success))
+                    }
                 }
                 .setNegativeButton(android.R.string.cancel, null)
                 .show()

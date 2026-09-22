@@ -36,7 +36,7 @@ class AppearancePresetTest {
     fun amoledDisablesBlurAndUsesBlack() {
         val spec = AppearancePresetCatalog.spec(AppearancePresetKey.AMOLED)!!
         assertFalse(spec.blurEnabled)
-        assertEquals(0, spec.blurAmount)
+        assertEquals(SideFlowPolicy.MIN_BLUR_AMOUNT, spec.blurAmount)
         assertEquals("#FF000000", spec.backgroundColor)
     }
 
