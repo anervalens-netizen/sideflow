@@ -381,8 +381,13 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         }
 
         binding.btnPickAccent.setOnClickListener {
-            if (panelPrefs.uiTheme == PanelPreferences.THEME_ORIGIN) {
-                binding.root.showModernToast("Accent color is locked for OriginOS theme")
+            if (
+                !AppearancePresetCatalog.canEditAccent(
+                    uiTheme = panelPrefs.uiTheme,
+                    useCustomAccent = panelPrefs.useCustomAccent
+                )
+            ) {
+                binding.root.showModernToast("Enable Custom Accent to choose a color")
                 return@setOnClickListener
             }
             openColorPicker(Color.parseColor(panelPrefs.accentColor)) { newColor ->

@@ -87,6 +87,28 @@ class AppearancePresetTest {
     }
 
     @Test
+    fun originThemeAllowsAccentPickerWhenCustomAccentOverrideIsEnabled() {
+        assertFalse(
+            AppearancePresetCatalog.canEditAccent(
+                PanelPreferences.THEME_ORIGIN,
+                useCustomAccent = false
+            )
+        )
+        assertTrue(
+            AppearancePresetCatalog.canEditAccent(
+                PanelPreferences.THEME_ORIGIN,
+                useCustomAccent = true
+            )
+        )
+        assertTrue(
+            AppearancePresetCatalog.canEditAccent(
+                PanelPreferences.THEME_RICH,
+                useCustomAccent = false
+            )
+        )
+    }
+
+    @Test
     fun customHasNoForcedSpec() {
         assertNull(AppearancePresetCatalog.spec(AppearancePresetKey.CUSTOM))
     }

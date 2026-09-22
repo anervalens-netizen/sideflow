@@ -315,6 +315,22 @@ Fresh exact-head review of `d6cc64c3` produced three Codex P2 findings. The repo
 - `git diff --check`: **PASS**.
 - PR #7 remains draft/unmerged; fresh Codex + repository AI exact-head review required.
 
+## PR #7 — final review round 3
+
+Fresh reviews of `03565c0` produced one repository AI-review P2 and one Codex P2. Both are remediated locally in the next commit; another exact-head review remains mandatory before merge.
+
+| ID | Source | Severity | Finding | Current assessment | Remediation evidence |
+| --- | --- | --- | --- | --- | --- |
+| r4075026285 / F-e3b3c616ce | AI PR review | P2 | Section-card bounds cache retains deleted section IDs indefinitely | **RESOLVED (local)** | `SectionCardDecoration` clears its cache when disabled/empty and evicts every entry not touched in the current draw frame, bounding retained state to currently visible sections. |
+| r4075047400 | Codex | P2 | Named presets force Origin theme and therefore block accent selection even when Custom Accent override is enabled | **RESOLVED (local)** | Accent-edit policy now allows the picker whenever `Use Custom Accent` is enabled, including named presets on Origin; Origin remains locked only without the explicit override. Regression covers Origin locked/unlocked and non-Origin behavior. |
+
+### PR #7 final-round-3 local validation
+
+- Gradle `testDebugUnitTest assembleDebug`: **PASS**.
+- Unit tests: **62/62 PASS**.
+- `git diff --check`: **PASS**.
+- PR #7 remains draft/unmerged; fresh exact-head Codex + repository AI review and CI are mandatory.
+
 ## Mandatory remediation order
 
 1. **Privacy / misleading UI first:** PR #2 donation UI, backup filename ignore, PR #5 Auto Backup and export warning.

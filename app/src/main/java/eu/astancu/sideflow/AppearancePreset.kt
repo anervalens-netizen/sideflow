@@ -74,6 +74,12 @@ object AppearancePresetCatalog {
         importsAppearanceValues: Boolean
     ): Boolean = !hasPresetKey && importsAppearanceValues
 
+    fun canEditAccent(
+        uiTheme: String,
+        useCustomAccent: Boolean
+    ): Boolean =
+        uiTheme != PanelPreferences.THEME_ORIGIN || useCustomAccent
+
     fun shouldUseResolvedPickerAccent(
         preset: AppearancePresetKey,
         useCustomAccent: Boolean

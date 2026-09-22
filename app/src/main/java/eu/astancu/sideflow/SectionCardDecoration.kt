@@ -45,7 +45,11 @@ class SectionCardDecoration(
     }
 
     override fun onDraw(canvas: Canvas, parent: RecyclerView, state: RecyclerView.State) {
-        if (!enabled || parent.childCount == 0) return
+        if (!enabled || parent.childCount == 0) {
+            boundsBySection.clear()
+            activeSectionIds.clear()
+            return
+        }
 
         frameId += 1L
         activeSectionIds.clear()
@@ -70,6 +74,13 @@ class SectionCardDecoration(
             } else {
                 bounds.top = minOf(bounds.top, decoratedBounds.top)
                 bounds.bottom = maxOf(bounds.bottom, decoratedBounds.bottom)
+            }
+        }
+
+        val staleIterator = boundsBySection.entries.iterator()
+        while (staleIterator.hasNext()) {
+            if (staleIterator.next().value.frameId != frameId) {
+                staleIterator.remove()
             }
         }
 
