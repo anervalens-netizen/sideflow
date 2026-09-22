@@ -297,6 +297,24 @@ PR #6 detached from the live branch after reviewed head `bdb931ee`; PR #7 is now
 - `git diff --check`: **PASS**.
 - PR #7 remains draft/unmerged; a fresh exact-head Codex review and CI are mandatory.
 
+## PR #7 — final P4 review round 2
+
+Fresh exact-head review of `d6cc64c3` produced three Codex P2 findings. The repository AI reviewer also reported one P2 on the preceding `b8172b2` head; that system-info tint issue is already resolved in `d6cc64c3` and remains fixed. All applicable findings are remediated locally in the next commit; another exact-head review is mandatory.
+
+| ID | Source | Severity | Finding | Current assessment | Remediation evidence |
+| --- | --- | --- | --- | --- | --- |
+| r4074883570 | Codex | P2 | Section-card decoration allocates maps/bounds/RectF and resolves theme color every draw frame | **RESOLVED (local)** | Decoration now reuses persistent per-section bounds, active-ID and RectF scratch state; enabled/color are cached and updated by SidePanelView only when UI state/theme changes, so Material You resolution is removed from the draw hot path. |
+| r4074883580 | Codex | P2 | Material You -> Custom preserves the dynamic accent in storage but picker falls back to fixed blue | **RESOLVED (local)** | Picker accent policy now routes both MATERIAL_YOU and CUSTOM through the resolved/stored accent path. Pure regression verifies Custom, Material You and explicit custom-accent behavior. |
+| r4074883591 | Codex | P2 | `loadCurrentSettings()` programmatic control synchronization triggers multiple ACTION_REFRESH passes | **RESOLVED (local)** | Slider listeners now handle only real user changes outside `syncingUi`; blur/hide/custom-accent switch listeners return during synchronization. Pure policy regression verifies programmatic/user slider cases. |
+| F-49251068d4 | AI PR review | P2 | Recursive tool tint dims RAM/Battery after their full-opacity color is assigned | **RESOLVED on `d6cc64c3`** | Full-opacity system-info colors are applied after recursive secondary-label tinting, exactly matching the reviewer remediation. |
+
+### PR #7 final-review-round-2 local validation
+
+- Gradle `testDebugUnitTest assembleDebug`: **PASS**.
+- Unit tests: **61/61 PASS**.
+- `git diff --check`: **PASS**.
+- PR #7 remains draft/unmerged; fresh Codex + repository AI exact-head review required.
+
 ## Mandatory remediation order
 
 1. **Privacy / misleading UI first:** PR #2 donation UI, backup filename ignore, PR #5 Auto Backup and export warning.

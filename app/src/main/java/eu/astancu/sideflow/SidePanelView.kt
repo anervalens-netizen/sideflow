@@ -36,6 +36,7 @@ class SidePanelView @JvmOverloads constructor(
     private val binding: SidePanelLayoutBinding = SidePanelLayoutBinding.inflate(LayoutInflater.from(context), this, true)
     private val adapter: PanelAppsAdapter
     private val panelPrefs = PanelPreferences(context)
+    private lateinit var sectionCardDecoration: SectionCardDecoration
     private var appliedItemLayoutTheme: String = panelPrefs.uiTheme
     private var currentCols = 1
     private var isPickerOpenInternal = false
@@ -141,23 +142,16 @@ class SidePanelView @JvmOverloads constructor(
             }
         }
         binding.rvPanelApps.adapter = adapter
-        binding.rvPanelApps.addItemDecoration(
-            SectionCardDecoration(
-                horizontalInsetPx = context.dpToPx(2),
-                verticalInsetPx = context.dpToPx(2),
-                cornerRadiusPx = context.dpToPx(14).toFloat(),
-                sectionIdAt = adapter::getSectionId,
-                isEnabled = {
-                    !panelPrefs.hideBackground &&
-                        !isPickerOpenInternal &&
-                        navigationStack.isEmpty()
-                },
-                resolveColor = {
-                    val base = if (panelPrefs.panelUsesDarkContent()) Color.BLACK else Color.WHITE
-                    androidx.core.graphics.ColorUtils.setAlphaComponent(base, 14)
-                }
-            )
+        val initialUsesDarkContent = panelPrefs.panelUsesDarkContent()
+        sectionCardDecoration = SectionCardDecoration(
+            horizontalInsetPx = context.dpToPx(2),
+            verticalInsetPx = context.dpToPx(2),
+            cornerRadiusPx = context.dpToPx(14).toFloat(),
+            sectionIdAt = adapter::getSectionId,
+            initialEnabled = !panelPrefs.hideBackground,
+            initialColor = sectionCardColor(initialUsesDarkContent)
         )
+        binding.rvPanelApps.addItemDecoration(sectionCardDecoration)
 
         binding.rvPanelApps.setHasFixedSize(false)
         binding.rvPanelApps.isNestedScrollingEnabled = false
@@ -546,9 +540,26 @@ class SidePanelView @JvmOverloads constructor(
         }
     }
 
+    private fun sectionCardColor(usesDarkContent: Boolean): Int {
+        val base = if (usesDarkContent) Color.BLACK else Color.WHITE
+        return androidx.core.graphics.ColorUtils.setAlphaComponent(base, 14)
+    }
+
+    private fun refreshSectionCardDecoration(usesDarkContent: Boolean = panelPrefs.panelUsesDarkContent()) {
+        if (!::sectionCardDecoration.isInitialized) return
+        val changed = sectionCardDecoration.updateStyle(
+            enabled = !panelPrefs.hideBackground &&
+                !isPickerOpenInternal &&
+                navigationStack.isEmpty(),
+            color = sectionCardColor(usesDarkContent)
+        )
+        if (changed) binding.rvPanelApps.invalidateItemDecorations()
+    }
+
     fun animatePickerToggle(isOpen: Boolean) {
         isPickerOpenInternal = isOpen
         adapter.setCompactMode(isOpen)
+        refreshSectionCardDecoration()
         updateSideLayout()
         val targetRotation = if (isOpen) 90f else (if (panelPrefs.panelSide == PanelPreferences.SIDE_RIGHT) 180f else 0f)
         springRotation.animateToFinalPosition(targetRotation)
@@ -718,7 +729,7 @@ class SidePanelView @JvmOverloads constructor(
         // their full-opacity content tint after the recursive secondary tint.
         binding.tvRamUsage.setTextColor(contentColor)
         binding.tvBatTemp.setTextColor(contentColor)
-        binding.rvPanelApps.invalidateItemDecorations()
+        refreshSectionCardDecoration(usesDarkContent)
         
         val isGameMode = false // panelPrefs.getGameApps().contains(panelPrefs.currentForegroundPackage)
         val showSysInfoEffective = panelPrefs.showSysInfo || isGameMode

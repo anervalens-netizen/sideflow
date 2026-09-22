@@ -78,6 +78,11 @@ object SideFlowPolicy {
             .coerceIn(MIN_ICON_SCALE, MAX_ICON_SCALE)
     }
 
+    fun shouldHandleUserSliderChange(
+        syncingUi: Boolean,
+        fromUser: Boolean
+    ): Boolean = !syncingUi && fromUser
+
     fun canReorderShelfItem(
         isSectionHeader: Boolean,
         hasShelfItemId: Boolean,

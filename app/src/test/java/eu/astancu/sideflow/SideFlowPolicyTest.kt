@@ -115,6 +115,14 @@ class SideFlowPolicyTest {
     }
 
     @Test
+    fun programmaticSliderSynchronizationDoesNotTriggerRefreshWork() {
+        assertFalse(SideFlowPolicy.shouldHandleUserSliderChange(true, false))
+        assertFalse(SideFlowPolicy.shouldHandleUserSliderChange(true, true))
+        assertFalse(SideFlowPolicy.shouldHandleUserSliderChange(false, false))
+        assertTrue(SideFlowPolicy.shouldHandleUserSliderChange(false, true))
+    }
+
+    @Test
     fun folderChildrenAreNotAdvertisedAsReorderable() {
         assertTrue(SideFlowPolicy.canReorderShelfItem(false, true, "apps"))
         assertFalse(SideFlowPolicy.canReorderShelfItem(false, true, "folder:parent-id"))

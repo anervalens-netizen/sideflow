@@ -283,8 +283,10 @@ class AppPickerPanelView @JvmOverloads constructor(
 
     private fun resolvedPickerAccentColor(lightPanel: Boolean): Int {
         return if (
-            panelPrefs.appearancePreset == AppearancePresetKey.MATERIAL_YOU ||
-            panelPrefs.useCustomAccent
+            AppearancePresetCatalog.shouldUseResolvedPickerAccent(
+                preset = panelPrefs.appearancePreset,
+                useCustomAccent = panelPrefs.useCustomAccent
+            )
         ) {
             panelPrefs.resolvedPanelAccentColor()
         } else {

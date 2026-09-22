@@ -73,4 +73,12 @@ object AppearancePresetCatalog {
         hasPresetKey: Boolean,
         importsAppearanceValues: Boolean
     ): Boolean = !hasPresetKey && importsAppearanceValues
+
+    fun shouldUseResolvedPickerAccent(
+        preset: AppearancePresetKey,
+        useCustomAccent: Boolean
+    ): Boolean =
+        preset == AppearancePresetKey.MATERIAL_YOU ||
+            preset == AppearancePresetKey.CUSTOM ||
+            useCustomAccent
 }

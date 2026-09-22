@@ -110,44 +110,51 @@ class AppearanceSettingsActivity : AppCompatActivity() {
 
     private fun setupListeners() {
         binding.sbOpacity.addOnChangeListener { _, value, fromUser ->
-            if (fromUser) markCustomPreset()
+            if (!SideFlowPolicy.shouldHandleUserSliderChange(syncingUi, fromUser)) return@addOnChangeListener
+            markCustomPreset()
             panelPrefs.panelOpacity = value.toInt()
             binding.tvOpacityValue.text = "${value.toInt()}%"
             applyOnly()
         }
 
         binding.sbPanelRadius.addOnChangeListener { _, value, fromUser ->
-            if (fromUser) markCustomPreset()
+            if (!SideFlowPolicy.shouldHandleUserSliderChange(syncingUi, fromUser)) return@addOnChangeListener
+            markCustomPreset()
             panelPrefs.panelCornerRadius = value.toInt()
             binding.tvRadiusValue.text = "${value.toInt()}dp"
             applyOnly()
         }
 
-        binding.sbPanelWidth.addOnChangeListener { _, value, _ ->
+        binding.sbPanelWidth.addOnChangeListener { _, value, fromUser ->
+            if (!SideFlowPolicy.shouldHandleUserSliderChange(syncingUi, fromUser)) return@addOnChangeListener
             panelPrefs.panelWidthDp = value.toInt()
             binding.tvPanelWidthValue.text = "${panelPrefs.panelWidthDp}dp"
             applyOnly()
         }
 
-        binding.sbItemGap.addOnChangeListener { _, value, _ ->
+        binding.sbItemGap.addOnChangeListener { _, value, fromUser ->
+            if (!SideFlowPolicy.shouldHandleUserSliderChange(syncingUi, fromUser)) return@addOnChangeListener
             panelPrefs.itemGapDp = value.toInt()
             binding.tvItemGapValue.text = "${panelPrefs.itemGapDp}dp"
             applyOnly()
         }
 
-        binding.sbIconScale.addOnChangeListener { _, value, _ ->
+        binding.sbIconScale.addOnChangeListener { _, value, fromUser ->
+            if (!SideFlowPolicy.shouldHandleUserSliderChange(syncingUi, fromUser)) return@addOnChangeListener
             panelPrefs.scaleFactor = value
             binding.tvIconScaleValue.text = String.format("%.1fx", value)
             applyOnly()
         }
 
-        binding.sbMaxHeight.addOnChangeListener { _, value, _ ->
+        binding.sbMaxHeight.addOnChangeListener { _, value, fromUser ->
+            if (!SideFlowPolicy.shouldHandleUserSliderChange(syncingUi, fromUser)) return@addOnChangeListener
             panelPrefs.panelMaxHeight = value.toInt()
             binding.tvMaxHeightValue.text = "${value.toInt()}dp"
             applyOnly()
         }
 
-        binding.sbPickerMaxHeight.addOnChangeListener { _, value, _ ->
+        binding.sbPickerMaxHeight.addOnChangeListener { _, value, fromUser ->
+            if (!SideFlowPolicy.shouldHandleUserSliderChange(syncingUi, fromUser)) return@addOnChangeListener
             panelPrefs.pickerMaxHeight = value.toInt()
             binding.tvPickerMaxHeightValue.text = "${value.toInt()}dp"
             applyOnly()
@@ -300,7 +307,8 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         }
 
         binding.featureBlur.setOnCheckedChangeListener { _, isChecked ->
-            if (!syncingUi) markCustomPreset()
+            if (syncingUi) return@setOnCheckedChangeListener
+            markCustomPreset()
             panelPrefs.blurEnabled = isChecked
             applyOnly()
         }
@@ -315,14 +323,16 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         }
 
         binding.sbBlurAmount.addOnChangeListener { _, value, fromUser ->
-            if (fromUser) markCustomPreset()
+            if (!SideFlowPolicy.shouldHandleUserSliderChange(syncingUi, fromUser)) return@addOnChangeListener
+            markCustomPreset()
             panelPrefs.blurAmount = value.toInt()
             binding.tvBlurAmountValue.text = "${value.toInt()}"
             applyOnly()
         }
 
         binding.featureHideBg.setOnCheckedChangeListener { _, isChecked ->
-            if (!syncingUi) markCustomPreset()
+            if (syncingUi) return@setOnCheckedChangeListener
+            markCustomPreset()
             panelPrefs.hideBackground = isChecked
             applyOnly()
         }
@@ -351,6 +361,7 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         }
 
         binding.featureCustomAccent.setOnCheckedChangeListener { _, isChecked ->
+            if (syncingUi) return@setOnCheckedChangeListener
             panelPrefs.useCustomAccent = isChecked
             applyOnly()
         }

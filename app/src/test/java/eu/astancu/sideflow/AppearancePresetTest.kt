@@ -59,6 +59,34 @@ class AppearancePresetTest {
     }
 
     @Test
+    fun customAndMaterialYouUseResolvedPickerAccent() {
+        assertTrue(
+            AppearancePresetCatalog.shouldUseResolvedPickerAccent(
+                AppearancePresetKey.MATERIAL_YOU,
+                useCustomAccent = false
+            )
+        )
+        assertTrue(
+            AppearancePresetCatalog.shouldUseResolvedPickerAccent(
+                AppearancePresetKey.CUSTOM,
+                useCustomAccent = false
+            )
+        )
+        assertTrue(
+            AppearancePresetCatalog.shouldUseResolvedPickerAccent(
+                AppearancePresetKey.SMOKE_GLASS,
+                useCustomAccent = true
+            )
+        )
+        assertFalse(
+            AppearancePresetCatalog.shouldUseResolvedPickerAccent(
+                AppearancePresetKey.SMOKE_GLASS,
+                useCustomAccent = false
+            )
+        )
+    }
+
+    @Test
     fun customHasNoForcedSpec() {
         assertNull(AppearancePresetCatalog.spec(AppearancePresetKey.CUSTOM))
     }
