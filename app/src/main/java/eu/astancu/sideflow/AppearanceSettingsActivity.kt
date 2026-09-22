@@ -109,7 +109,8 @@ class AppearanceSettingsActivity : AppCompatActivity() {
     }
 
     private fun setupListeners() {
-        binding.sbOpacity.addOnChangeListener { _, value, _ ->
+        binding.sbOpacity.addOnChangeListener { _, value, fromUser ->
+            if (fromUser) markCustomPreset()
             panelPrefs.panelOpacity = value.toInt()
             binding.tvOpacityValue.text = "${value.toInt()}%"
             applyOnly()
@@ -176,6 +177,7 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         }
 
         binding.btnResetOpacity.setOnClickListener {
+            markCustomPreset()
             val default = 100
             panelPrefs.panelOpacity = default
             binding.sbOpacity.value = default.toFloat()
@@ -300,6 +302,15 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         binding.featureBlur.setOnCheckedChangeListener { _, isChecked ->
             if (!syncingUi) markCustomPreset()
             panelPrefs.blurEnabled = isChecked
+            applyOnly()
+        }
+
+        binding.btnResetBlur.setOnClickListener {
+            markCustomPreset()
+            val default = 15
+            panelPrefs.blurAmount = default
+            binding.sbBlurAmount.value = default.toFloat()
+            binding.tvBlurAmountValue.text = default.toString()
             applyOnly()
         }
 

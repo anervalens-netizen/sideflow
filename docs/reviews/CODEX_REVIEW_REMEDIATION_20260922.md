@@ -105,6 +105,23 @@ Fresh Codex review of c6350c66 completed on 2026-09-22 and produced five new act
 - git diff --check: **PASS**.
 - P4 remains draft/WIP; another Codex review is mandatory on the new exact HEAD.
 
+## P4 adversarial hardening before review round 2
+
+A focused static pass over the appearance implementation found three adjacent defects before Codex could report them on the next head. They are fixed in the same R0/P4 branch and must be included in the next exact-head review.
+
+| Area | Finding | Remediation evidence |
+| --- | --- | --- |
+| Panel opacity | The Appearance “Panel Opacity” preference changed the edge handle but was not applied to the panel/picker background, so the advertised P4 custom opacity control was ineffective for the panel itself. | Resolved background colors now apply the persisted opacity multiplier; named presets set deterministic opacity values. |
+| Appearance import bounds | Imported opacity, radius, icon scale and max-height values could lie outside Material Slider ranges, creating the same class of reopen crash as the AMOLED blur finding. | Getters/setters/import now sanitize every Appearance slider-bound value: opacity, blur, radius, width, gap, icon scale, panel max height and picker max height. |
+| Reset Blur | Appearance exposed a Reset Blur control but the activity had no click handler. | Reset Blur now restores 15, marks a named preset Custom and refreshes the panel. Opacity edits/resets likewise mark named presets Custom because opacity is preset-defined. |
+
+### P4 hardening validation
+
+- Gradle testDebugUnitTest + assembleDebug: **PASS**.
+- Unit tests: **46/46 PASS**.
+- git diff --check: **PASS**.
+- A new Codex review is required on the resulting exact HEAD before R0 can close.
+
 ## Mandatory remediation order
 
 1. **Privacy / misleading UI first:** PR #2 donation UI, backup filename ignore, PR #5 Auto Backup and export warning.

@@ -22,14 +22,16 @@ class AppearancePresetTest {
         val spec = AppearancePresetCatalog.spec(AppearancePresetKey.SMOKE_GLASS)!!
         assertTrue(spec.blurEnabled)
         assertTrue(spec.blurAmount > 0)
-        assertEquals("#D91C1E22", spec.backgroundColor)
+        assertEquals("#FF1C1E22", spec.backgroundColor)
+        assertEquals(85, spec.opacityPercent)
     }
 
     @Test
     fun frostedLightHasLightSurface() {
         val spec = AppearancePresetCatalog.spec(AppearancePresetKey.FROSTED_LIGHT)!!
         assertTrue(spec.blurEnabled)
-        assertEquals("#ECF4F6F8", spec.backgroundColor)
+        assertEquals("#FFF4F6F8", spec.backgroundColor)
+        assertEquals(93, spec.opacityPercent)
     }
 
     @Test
@@ -38,6 +40,7 @@ class AppearancePresetTest {
         assertFalse(spec.blurEnabled)
         assertEquals(SideFlowPolicy.MIN_BLUR_AMOUNT, spec.blurAmount)
         assertEquals("#FF000000", spec.backgroundColor)
+        assertEquals(100, spec.opacityPercent)
     }
 
     @Test
@@ -45,6 +48,7 @@ class AppearancePresetTest {
         val spec = AppearancePresetCatalog.spec(AppearancePresetKey.MATERIAL_YOU)!!
         assertTrue(spec.usesMaterialYouSurface)
         assertTrue(spec.blurEnabled)
+        assertEquals(90, spec.opacityPercent)
     }
 
     @Test

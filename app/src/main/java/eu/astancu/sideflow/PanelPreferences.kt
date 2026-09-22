@@ -317,21 +317,21 @@ class PanelPreferences(context: Context) {
                 if (obj.has(KEY_FREEFORM_WINDOW_MODE)) putString(KEY_FREEFORM_WINDOW_MODE, obj.getString(KEY_FREEFORM_WINDOW_MODE))
 
                 // Ints
-                if (obj.has(KEY_PANEL_OPACITY)) putInt(KEY_PANEL_OPACITY, obj.getInt(KEY_PANEL_OPACITY))
+                if (obj.has(KEY_PANEL_OPACITY)) putInt(KEY_PANEL_OPACITY, SideFlowPolicy.sanitizePanelOpacity(obj.getInt(KEY_PANEL_OPACITY)))
                 if (obj.has(KEY_HANDLE_HEIGHT)) putInt(KEY_HANDLE_HEIGHT, obj.getInt(KEY_HANDLE_HEIGHT))
                 if (obj.has(KEY_HANDLE_WIDTH)) putInt(KEY_HANDLE_WIDTH, obj.getInt(KEY_HANDLE_WIDTH))
                 if (obj.has(KEY_HANDLE_OFFSET)) putInt(KEY_HANDLE_OFFSET, obj.getInt(KEY_HANDLE_OFFSET))
                 if (obj.has(KEY_PANEL_COLUMNS)) putInt(KEY_PANEL_COLUMNS, SideFlowPolicy.sanitizeColumns(obj.getInt(KEY_PANEL_COLUMNS)))
                 if (obj.has(KEY_PANEL_WIDTH)) putInt(KEY_PANEL_WIDTH, SideFlowPolicy.sanitizePanelWidthDp(obj.getInt(KEY_PANEL_WIDTH)))
                 if (obj.has(KEY_ITEM_GAP)) putInt(KEY_ITEM_GAP, SideFlowPolicy.sanitizeItemGapDp(obj.getInt(KEY_ITEM_GAP)))
-                if (obj.has(KEY_PANEL_RADIUS)) putInt(KEY_PANEL_RADIUS, obj.getInt(KEY_PANEL_RADIUS))
+                if (obj.has(KEY_PANEL_RADIUS)) putInt(KEY_PANEL_RADIUS, SideFlowPolicy.sanitizePanelRadiusDp(obj.getInt(KEY_PANEL_RADIUS)))
                 if (obj.has(KEY_PILL_WIDTH)) putInt(KEY_PILL_WIDTH, obj.getInt(KEY_PILL_WIDTH))
-                if (obj.has(KEY_BLUR_AMOUNT)) putInt(KEY_BLUR_AMOUNT, obj.getInt(KEY_BLUR_AMOUNT))
+                if (obj.has(KEY_BLUR_AMOUNT)) putInt(KEY_BLUR_AMOUNT, SideFlowPolicy.sanitizeBlurAmount(obj.getInt(KEY_BLUR_AMOUNT)))
                 if (obj.has(KEY_ANIM_SPEED)) putInt(KEY_ANIM_SPEED, obj.getInt(KEY_ANIM_SPEED))
                 if (obj.has(KEY_PICKER_ANIM_TYPE)) putString(KEY_PICKER_ANIM_TYPE, obj.getString(KEY_PICKER_ANIM_TYPE))
                 if (obj.has(KEY_PICKER_GAP)) putInt(KEY_PICKER_GAP, obj.getInt(KEY_PICKER_GAP))
-                if (obj.has(KEY_PANEL_MAX_HEIGHT)) putInt(KEY_PANEL_MAX_HEIGHT, obj.getInt(KEY_PANEL_MAX_HEIGHT))
-                if (obj.has(KEY_PICKER_MAX_HEIGHT)) putInt(KEY_PICKER_MAX_HEIGHT, obj.getInt(KEY_PICKER_MAX_HEIGHT))
+                if (obj.has(KEY_PANEL_MAX_HEIGHT)) putInt(KEY_PANEL_MAX_HEIGHT, SideFlowPolicy.sanitizePanelMaxHeightDp(obj.getInt(KEY_PANEL_MAX_HEIGHT)))
+                if (obj.has(KEY_PICKER_MAX_HEIGHT)) putInt(KEY_PICKER_MAX_HEIGHT, SideFlowPolicy.sanitizePickerMaxHeightDp(obj.getInt(KEY_PICKER_MAX_HEIGHT)))
                 if (obj.has(KEY_SLIDE_SENSITIVITY)) putInt(KEY_SLIDE_SENSITIVITY, obj.getInt(KEY_SLIDE_SENSITIVITY))
                 if (obj.has(KEY_SWIPE_SENSITIVITY)) putInt(KEY_SWIPE_SENSITIVITY, obj.getInt(KEY_SWIPE_SENSITIVITY))
                 if (obj.has(KEY_FREEFORM_CUSTOM_W)) putInt(KEY_FREEFORM_CUSTOM_W, obj.getInt(KEY_FREEFORM_CUSTOM_W))
@@ -339,7 +339,7 @@ class PanelPreferences(context: Context) {
                 if (obj.has(KEY_THEME_MODE)) putInt(KEY_THEME_MODE, obj.getInt(KEY_THEME_MODE))
 
                 // Float
-                if (obj.has(KEY_SCALE_FACTOR)) putFloat(KEY_SCALE_FACTOR, obj.getDouble(KEY_SCALE_FACTOR).toFloat())
+                if (obj.has(KEY_SCALE_FACTOR)) putFloat(KEY_SCALE_FACTOR, SideFlowPolicy.sanitizeIconScale(obj.getDouble(KEY_SCALE_FACTOR).toFloat()))
 
                 // Booleans
                 if (obj.has(KEY_AUTO_START)) putBoolean(KEY_AUTO_START, obj.getBoolean(KEY_AUTO_START))
@@ -478,12 +478,12 @@ class PanelPreferences(context: Context) {
         set(value) = prefs.edit { putBoolean(KEY_SHOW_NOTIFICATION_APPS, value) }
 
     var panelMaxHeight: Int
-        get() = prefs.getInt(KEY_PANEL_MAX_HEIGHT, 350)
-        set(value) = prefs.edit { putInt(KEY_PANEL_MAX_HEIGHT, value) }
+        get() = SideFlowPolicy.sanitizePanelMaxHeightDp(prefs.getInt(KEY_PANEL_MAX_HEIGHT, 350))
+        set(value) = prefs.edit { putInt(KEY_PANEL_MAX_HEIGHT, SideFlowPolicy.sanitizePanelMaxHeightDp(value)) }
 
     var pickerMaxHeight: Int
-        get() = prefs.getInt(KEY_PICKER_MAX_HEIGHT, 450)
-        set(value) = prefs.edit { putInt(KEY_PICKER_MAX_HEIGHT, value) }
+        get() = SideFlowPolicy.sanitizePickerMaxHeightDp(prefs.getInt(KEY_PICKER_MAX_HEIGHT, 450))
+        set(value) = prefs.edit { putInt(KEY_PICKER_MAX_HEIGHT, SideFlowPolicy.sanitizePickerMaxHeightDp(value)) }
 
     var pillColor: String
         get() = prefs.getString(KEY_PILL_COLOR, DEFAULT_PILL_COLOR) ?: DEFAULT_PILL_COLOR
@@ -506,8 +506,8 @@ class PanelPreferences(context: Context) {
         set(value) = prefs.edit { putInt(KEY_FREEFORM_CUSTOM_H, value) }
 
     var scaleFactor: Float
-        get() = prefs.getFloat(KEY_SCALE_FACTOR, 1.0f)
-        set(value) = prefs.edit { putFloat(KEY_SCALE_FACTOR, value) }
+        get() = SideFlowPolicy.sanitizeIconScale(prefs.getFloat(KEY_SCALE_FACTOR, 1.0f))
+        set(value) = prefs.edit { putFloat(KEY_SCALE_FACTOR, SideFlowPolicy.sanitizeIconScale(value)) }
 
     var showSysInfo: Boolean
         get() = prefs.getBoolean(KEY_SHOW_SYS_INFO, false)
@@ -614,8 +614,8 @@ class PanelPreferences(context: Context) {
         }
 
     var panelOpacity: Int
-        get() = prefs.getInt(KEY_PANEL_OPACITY, DEFAULT_OPACITY)
-        set(value) = prefs.edit { putInt(KEY_PANEL_OPACITY, value) }
+        get() = SideFlowPolicy.sanitizePanelOpacity(prefs.getInt(KEY_PANEL_OPACITY, DEFAULT_OPACITY))
+        set(value) = prefs.edit { putInt(KEY_PANEL_OPACITY, SideFlowPolicy.sanitizePanelOpacity(value)) }
 
     var handleHeight: Int
         get() = prefs.getInt(KEY_HANDLE_HEIGHT, DEFAULT_HANDLE_HEIGHT)
@@ -664,6 +664,7 @@ class PanelPreferences(context: Context) {
             putString(KEY_APPEARANCE_PRESET, preset.storageValue)
             putString(KEY_UI_THEME, THEME_ORIGIN)
             putString(KEY_PANEL_BG_COLOR, spec.backgroundColor)
+            putInt(KEY_PANEL_OPACITY, SideFlowPolicy.sanitizePanelOpacity(spec.opacityPercent))
             putBoolean(KEY_BLUR_ENABLED, spec.blurEnabled)
             putInt(KEY_BLUR_AMOUNT, spec.blurAmount)
             putInt(KEY_PANEL_RADIUS, spec.cornerRadiusDp)
@@ -672,28 +673,26 @@ class PanelPreferences(context: Context) {
     }
 
     fun resolvedPanelBackgroundColor(): Int {
-        if (appearancePreset == AppearancePresetKey.MATERIAL_YOU) {
-            val dynamicContext = com.google.android.material.color.DynamicColors
-                .wrapContextIfAvailable(appContext)
-            val dynamic = com.google.android.material.color.MaterialColors.getColor(
-                dynamicContext,
-                com.google.android.material.R.attr.colorSurfaceContainer,
-                android.graphics.Color.parseColor(AppearancePresetCatalog.materialYou.backgroundColor)
-            )
-            return androidx.core.graphics.ColorUtils.setAlphaComponent(dynamic, 232)
-        }
-
-        if (appearancePreset != AppearancePresetKey.CUSTOM) {
-            return runCatching { android.graphics.Color.parseColor(panelBackgroundColor) }
-                .getOrDefault(android.graphics.Color.parseColor(DEFAULT_PANEL_BG))
-        }
-
-        return when (uiTheme) {
-            THEME_ORIGIN -> android.graphics.Color.parseColor("#1F1F1F")
-            THEME_HYPEROS -> android.graphics.Color.parseColor("#E6252525")
+        val baseColor = when {
+            appearancePreset == AppearancePresetKey.MATERIAL_YOU -> {
+                val dynamicContext = com.google.android.material.color.DynamicColors
+                    .wrapContextIfAvailable(appContext)
+                com.google.android.material.color.MaterialColors.getColor(
+                    dynamicContext,
+                    com.google.android.material.R.attr.colorSurfaceContainer,
+                    android.graphics.Color.parseColor(AppearancePresetCatalog.materialYou.backgroundColor)
+                )
+            }
+            appearancePreset != AppearancePresetKey.CUSTOM -> {
+                runCatching { android.graphics.Color.parseColor(panelBackgroundColor) }
+                    .getOrDefault(android.graphics.Color.parseColor(DEFAULT_PANEL_BG))
+            }
+            uiTheme == THEME_ORIGIN -> android.graphics.Color.parseColor("#FF1F1F1F")
+            uiTheme == THEME_HYPEROS -> android.graphics.Color.parseColor("#FF252525")
             else -> runCatching { android.graphics.Color.parseColor(panelBackgroundColor) }
                 .getOrDefault(android.graphics.Color.parseColor(DEFAULT_PANEL_BG))
         }
+        return SideFlowPolicy.applyOpacityToArgb(baseColor, panelOpacity)
     }
 
     fun resolvedPanelAccentColor(): Int {
@@ -716,8 +715,8 @@ class PanelPreferences(context: Context) {
     }
 
     var panelCornerRadius: Int
-        get() = prefs.getInt(KEY_PANEL_RADIUS, DEFAULT_PANEL_RADIUS)
-        set(value) = prefs.edit { putInt(KEY_PANEL_RADIUS, value) }
+        get() = SideFlowPolicy.sanitizePanelRadiusDp(prefs.getInt(KEY_PANEL_RADIUS, DEFAULT_PANEL_RADIUS))
+        set(value) = prefs.edit { putInt(KEY_PANEL_RADIUS, SideFlowPolicy.sanitizePanelRadiusDp(value)) }
 
     var panelBackgroundColor: String
         get() = prefs.getString(KEY_PANEL_BG_COLOR, DEFAULT_PANEL_BG) ?: DEFAULT_PANEL_BG

@@ -76,6 +76,27 @@ class SideFlowPolicyTest {
     }
 
     @Test
+    fun appearanceSliderValuesAreSanitized() {
+        assertEquals(10, SideFlowPolicy.sanitizePanelOpacity(-1))
+        assertEquals(100, SideFlowPolicy.sanitizePanelOpacity(150))
+        assertEquals(0, SideFlowPolicy.sanitizePanelRadiusDp(-2))
+        assertEquals(60, SideFlowPolicy.sanitizePanelRadiusDp(80))
+        assertEquals(0.8f, SideFlowPolicy.sanitizeIconScale(0.1f), 0.0001f)
+        assertEquals(2.0f, SideFlowPolicy.sanitizeIconScale(4.0f), 0.0001f)
+        assertEquals(200, SideFlowPolicy.sanitizePanelMaxHeightDp(10))
+        assertEquals(800, SideFlowPolicy.sanitizePanelMaxHeightDp(900))
+        assertEquals(300, SideFlowPolicy.sanitizePickerMaxHeightDp(10))
+        assertEquals(800, SideFlowPolicy.sanitizePickerMaxHeightDp(900))
+    }
+
+    @Test
+    fun panelOpacityScalesExistingBackgroundAlpha() {
+        assertEquals(0x80112233.toInt(), SideFlowPolicy.applyOpacityToArgb(0xFF112233.toInt(), 50))
+        assertEquals(0x40112233.toInt(), SideFlowPolicy.applyOpacityToArgb(0x80112233.toInt(), 50))
+        assertEquals(0x1A112233.toInt(), SideFlowPolicy.applyOpacityToArgb(0x33112233.toInt(), 50))
+    }
+
+    @Test
     fun downwardHeaderDropAccountsForSourceRemoval() {
         assertEquals(
             2,

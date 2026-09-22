@@ -21,6 +21,16 @@ object SideFlowPolicy {
 
     const val MIN_BLUR_AMOUNT = 5
     const val MAX_BLUR_AMOUNT = 50
+    const val MIN_PANEL_OPACITY = 10
+    const val MAX_PANEL_OPACITY = 100
+    const val MIN_PANEL_RADIUS_DP = 0
+    const val MAX_PANEL_RADIUS_DP = 60
+    const val MIN_PANEL_MAX_HEIGHT_DP = 200
+    const val MAX_PANEL_MAX_HEIGHT_DP = 800
+    const val MIN_PICKER_MAX_HEIGHT_DP = 300
+    const val MAX_PICKER_MAX_HEIGHT_DP = 800
+    const val MIN_ICON_SCALE = 0.8f
+    const val MAX_ICON_SCALE = 2.0f
 
     private const val PANEL_GRID_HORIZONTAL_INSET_DP = 16
     private const val CELL_SAFETY_DP = 1
@@ -47,6 +57,28 @@ object SideFlowPolicy {
 
     fun sanitizeBlurAmount(value: Int): Int =
         value.coerceIn(MIN_BLUR_AMOUNT, MAX_BLUR_AMOUNT)
+
+    fun sanitizePanelOpacity(value: Int): Int =
+        value.coerceIn(MIN_PANEL_OPACITY, MAX_PANEL_OPACITY)
+
+    fun sanitizePanelRadiusDp(value: Int): Int =
+        value.coerceIn(MIN_PANEL_RADIUS_DP, MAX_PANEL_RADIUS_DP)
+
+    fun sanitizePanelMaxHeightDp(value: Int): Int =
+        value.coerceIn(MIN_PANEL_MAX_HEIGHT_DP, MAX_PANEL_MAX_HEIGHT_DP)
+
+    fun sanitizePickerMaxHeightDp(value: Int): Int =
+        value.coerceIn(MIN_PICKER_MAX_HEIGHT_DP, MAX_PICKER_MAX_HEIGHT_DP)
+
+    fun sanitizeIconScale(value: Float): Float =
+        if (value.isFinite()) value.coerceIn(MIN_ICON_SCALE, MAX_ICON_SCALE) else 1.0f
+
+    fun applyOpacityToArgb(argb: Int, opacityPercent: Int): Int {
+        val baseAlpha = (argb ushr 24) and 0xFF
+        val opacity = sanitizePanelOpacity(opacityPercent)
+        val scaledAlpha = (baseAlpha * opacity + 50) / 100
+        return (argb and 0x00FFFFFF) or (scaledAlpha shl 24)
+    }
 
     /**
      * Keeps an icon inside its actual grid cell even at the narrowest panel /

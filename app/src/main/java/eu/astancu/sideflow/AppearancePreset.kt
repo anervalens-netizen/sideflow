@@ -16,6 +16,7 @@ enum class AppearancePresetKey(val storageValue: String, val displayName: String
 data class AppearancePresetSpec(
     val key: AppearancePresetKey,
     val backgroundColor: String,
+    val opacityPercent: Int,
     val blurEnabled: Boolean,
     val blurAmount: Int,
     val cornerRadiusDp: Int,
@@ -25,7 +26,8 @@ data class AppearancePresetSpec(
 object AppearancePresetCatalog {
     val smokeGlass = AppearancePresetSpec(
         key = AppearancePresetKey.SMOKE_GLASS,
-        backgroundColor = "#D91C1E22",
+        backgroundColor = "#FF1C1E22",
+        opacityPercent = 85,
         blurEnabled = true,
         blurAmount = 28,
         cornerRadiusDp = 28
@@ -33,7 +35,8 @@ object AppearancePresetCatalog {
 
     val frostedLight = AppearancePresetSpec(
         key = AppearancePresetKey.FROSTED_LIGHT,
-        backgroundColor = "#ECF4F6F8",
+        backgroundColor = "#FFF4F6F8",
+        opacityPercent = 93,
         blurEnabled = true,
         blurAmount = 32,
         cornerRadiusDp = 28
@@ -42,6 +45,7 @@ object AppearancePresetCatalog {
     val amoled = AppearancePresetSpec(
         key = AppearancePresetKey.AMOLED,
         backgroundColor = "#FF000000",
+        opacityPercent = 100,
         blurEnabled = false,
         blurAmount = SideFlowPolicy.MIN_BLUR_AMOUNT,
         cornerRadiusDp = 24
@@ -49,7 +53,8 @@ object AppearancePresetCatalog {
 
     val materialYou = AppearancePresetSpec(
         key = AppearancePresetKey.MATERIAL_YOU,
-        backgroundColor = "#E61A1C1E",
+        backgroundColor = "#FF1A1C1E",
+        opacityPercent = 90,
         blurEnabled = true,
         blurAmount = 20,
         cornerRadiusDp = 28,
