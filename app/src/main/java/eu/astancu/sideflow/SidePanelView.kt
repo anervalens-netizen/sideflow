@@ -141,6 +141,23 @@ class SidePanelView @JvmOverloads constructor(
             }
         }
         binding.rvPanelApps.adapter = adapter
+        binding.rvPanelApps.addItemDecoration(
+            SectionCardDecoration(
+                horizontalInsetPx = context.dpToPx(2),
+                verticalInsetPx = context.dpToPx(2),
+                cornerRadiusPx = context.dpToPx(14).toFloat(),
+                sectionIdAt = adapter::getSectionId,
+                isEnabled = {
+                    !panelPrefs.hideBackground &&
+                        !isPickerOpenInternal &&
+                        navigationStack.isEmpty()
+                },
+                resolveColor = {
+                    val base = if (panelPrefs.panelUsesDarkContent()) Color.BLACK else Color.WHITE
+                    androidx.core.graphics.ColorUtils.setAlphaComponent(base, 14)
+                }
+            )
+        )
 
         binding.rvPanelApps.setHasFixedSize(false)
         binding.rvPanelApps.isNestedScrollingEnabled = false
@@ -615,6 +632,7 @@ class SidePanelView @JvmOverloads constructor(
 
     fun applyTheme() {
         val inFolder = navigationStack.isNotEmpty()
+        val usesDarkContent = panelPrefs.panelUsesDarkContent()
         val showTools = panelPrefs.showTools && !inFolder
         binding.toolsContainer.visibility = if (showTools) View.VISIBLE else View.GONE
         
@@ -652,7 +670,7 @@ class SidePanelView @JvmOverloads constructor(
                 cornerRadius = radius
 
                 if (preset != AppearancePresetKey.CUSTOM) {
-                    val content = if (panelPrefs.panelUsesDarkContent()) Color.BLACK else Color.WHITE
+                    val content = if (usesDarkContent) Color.BLACK else Color.WHITE
                     setStroke(
                         context.dpToPx(1),
                         androidx.core.graphics.ColorUtils.setAlphaComponent(content, 48)
@@ -675,7 +693,7 @@ class SidePanelView @JvmOverloads constructor(
             }
         }
 
-        val contentColor = if (panelPrefs.panelUsesDarkContent()) Color.BLACK else Color.WHITE
+        val contentColor = if (usesDarkContent) Color.BLACK else Color.WHITE
         val iconColorList = ColorStateList.valueOf(contentColor)
         binding.btnClose.imageTintList = iconColorList
         binding.btnScreenshot.imageTintList = iconColorList
@@ -692,6 +710,7 @@ class SidePanelView @JvmOverloads constructor(
             binding.toolsContainer,
             androidx.core.graphics.ColorUtils.setAlphaComponent(contentColor, 176)
         )
+        binding.rvPanelApps.invalidateItemDecorations()
         
         val isGameMode = false // panelPrefs.getGameApps().contains(panelPrefs.currentForegroundPackage)
         val showSysInfoEffective = panelPrefs.showSysInfo || isGameMode

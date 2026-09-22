@@ -319,6 +319,7 @@ class AppPickerPanelView @JvmOverloads constructor(
         
         val preset = panelPrefs.appearancePreset
         val themeBgColor = panelPrefs.resolvedPanelBackgroundColor()
+        val lightPanel = panelPrefs.pickerUsesDarkContent()
         drawable.setColor(themeBgColor)
 
         val finalRadius = if (preset == AppearancePresetKey.CUSTOM && theme == PanelPreferences.THEME_HYPEROS) {
@@ -329,7 +330,7 @@ class AppPickerPanelView @JvmOverloads constructor(
         drawable.cornerRadius = finalRadius * density
 
         if (preset != AppearancePresetKey.CUSTOM) {
-            val content = if (panelPrefs.pickerUsesDarkContent()) Color.BLACK else Color.WHITE
+            val content = if (lightPanel) Color.BLACK else Color.WHITE
             drawable.setStroke(
                 (1 * density).toInt(),
                 androidx.core.graphics.ColorUtils.setAlphaComponent(content, 48)
@@ -349,7 +350,6 @@ class AppPickerPanelView @JvmOverloads constructor(
         pickerPanelCard.background = drawable
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) pickerPanelCard.clipToOutline = true
 
-        val lightPanel = panelPrefs.pickerUsesDarkContent()
         val textColor = if (lightPanel) Color.parseColor("#1E293B") else Color.WHITE
         val subTextColor = if (lightPanel) Color.parseColor("#64748B") else Color.parseColor("#B3FFFFFF")
 

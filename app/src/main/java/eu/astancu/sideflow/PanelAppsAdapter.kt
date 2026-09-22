@@ -57,6 +57,9 @@ class PanelAppsAdapter(
 
     fun getApps(): List<AppInfo> = mutableApps.toList()
 
+    fun getSectionId(position: Int): String? =
+        mutableApps.getOrNull(position)?.sectionId
+
     fun getSpanSize(position: Int): Int {
         if (position >= mutableApps.size) return GRID_SPAN_COUNT
         val app = mutableApps[position]
@@ -241,7 +244,8 @@ class PanelAppsAdapter(
             }
             holder.tvName.textSize = baseTextSize * scale
             
-            val contentColor = if (panelPrefs.panelUsesDarkContent()) {
+            val usesDarkContent = panelPrefs.panelUsesDarkContent()
+            val contentColor = if (usesDarkContent) {
                 android.graphics.Color.parseColor("#E61A1A1A")
             } else {
                 android.graphics.Color.parseColor("#D9FFFFFF")
@@ -279,14 +283,14 @@ class PanelAppsAdapter(
                 }
 
                 holder.ivIcon.setImageResource(iconRes)
-                val pseudoContent = if (panelPrefs.panelUsesDarkContent()) {
+                val pseudoContent = if (usesDarkContent) {
                     android.graphics.Color.BLACK
                 } else {
                     android.graphics.Color.WHITE
                 }
                 holder.ivIcon.imageTintList = android.content.res.ColorStateList.valueOf(pseudoContent)
                 holder.ivIcon.background = android.graphics.drawable.GradientDrawable().apply {
-                    val chipColor = if (panelPrefs.panelUsesDarkContent()) "#14000000" else "#33FFFFFF"
+                    val chipColor = if (usesDarkContent) "#14000000" else "#33FFFFFF"
                     setColor(android.graphics.Color.parseColor(chipColor))
                     cornerRadius = context.dpToPx(12).toFloat()
                 }

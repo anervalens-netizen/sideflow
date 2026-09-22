@@ -259,6 +259,28 @@ Codex reviewed 9ffe91fd and completed with two additional P2 findings. Both are 
 - git diff --check: **PASS**.
 - P4 remains draft/unmerged; fresh Codex review is required on the resulting exact HEAD.
 
+## R0 closure evidence
+
+R0 is **PASS** on reviewed head `bdb931ee42b4d2909c4f4bd096c6de36b2cba07a`:
+
+- fresh Codex review: **clean / no major issues**;
+- unresolved PR #6 review threads: **0**;
+- exact-head CI `35760943007`: **SUCCESS**;
+- local validation at the reviewed head: **57/57 unit tests PASS** + `assembleDebug` PASS;
+- every published Codex finding and every published repository AI-review finding through round 9 was reconciled before closure.
+
+R0 closure does not authorize merging unfinished P4 work; it only clears the mandatory historical review-remediation gate.
+
+## P4 final completion batch after R0
+
+The final P4 code batch completes the remaining explicit appearance-plan item and reduces appearance work on scrolling/open hot paths:
+
+- **Subtle section cards:** a lightweight RecyclerView `ItemDecoration` draws rounded grouping surfaces behind visible user sections without nested RecyclerViews or extra per-item hierarchy. It is disabled for Invisible Background, compact picker mode, folders and synthetic sections.
+- **Optional section titles:** existing per-section title visibility remains intact and compatible with the card grouping.
+- **Hot-path hardening:** panel contrast is resolved once per app bind/theme pass instead of repeatedly for text/pseudo-icon/chip tinting; picker theme application likewise reuses one contrast decision.
+
+Local validation before final review: `57/57` unit tests PASS, `assembleDebug` PASS, `git diff --check` PASS. A fresh exact-head Codex review and CI run are still mandatory before PR #6 can merge.
+
 ## Mandatory remediation order
 
 1. **Privacy / misleading UI first:** PR #2 donation UI, backup filename ignore, PR #5 Auto Backup and export warning.

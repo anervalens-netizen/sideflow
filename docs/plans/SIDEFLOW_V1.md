@@ -33,10 +33,10 @@ The intended organization supports a small number of practical sections such as 
 - P1 core launcher/grid: merged; physical OnePlus validation remains pending.
 - P2 sectioned shelf: merged.
 - P3 fast shortcuts/share target: merged.
-- P4 appearance: WIP on `feat/sideflow-p4-appearance-presets`; local build/tests pass, not merged.
+- P4 appearance: code-complete locally on `feat/sideflow-p4-appearance-presets`; R0 cleared on `bdb931ee`; final exact-head review pending, not merged.
 - P5 backup/portability: not started as a phase.
 - P6 device/release validation: pending Android Remote Control MCP / physical device access.
-- **Mandatory Codex review remediation gate remains OPEN for verification:** all 20 previously actionable PR #2–#5 findings now have local fixes and focused regressions on the P4 branch. P4 still must not merge until a fresh Codex Connector review is reconciled and exact-head CI passes.
+- **Mandatory Codex review remediation gate R0 is CLEARED:** reviewed head `bdb931ee` had zero unresolved threads, exact-head CI `35760943007` green, and the fresh Codex review reported no major issues. The final P4 code batch still requires its own exact-head review before merge.
 
 ## Mandatory gate R0 — Codex Connector remediation
 
@@ -126,9 +126,9 @@ This gate exists because green CI alone did not catch several valid cross-featur
 - Subtle section cards and optional section titles.
 
 ### Definition of done
-- Presets render coherently in light/dark modes.
-- Custom values survive restart.
-- Appearance changes do not materially regress panel-open latency or scrolling.
+- Presets render coherently in light/dark modes. **Code complete; device visual validation pending.**
+- Custom values survive restart. **Implemented via persistent preferences/import sanitization.**
+- Appearance changes do not materially regress panel-open latency or scrolling. **Hot-path contrast reads were reduced and section cards use a RecyclerView decoration rather than nested lists; device validation pending.**
 
 ## Phase P5 — Backup / portability
 
