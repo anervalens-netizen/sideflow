@@ -30,7 +30,7 @@ class SidePanelView @JvmOverloads constructor(
     var onAddClick: ((Boolean) -> Unit)? = null
     var onScreenshot: (() -> Unit)? = null
     var onFolderOpen: ((String) -> Unit)? = null
-    var onBackNavigation: (() -> Unit)? = null
+    var onBackNavigation: ((String?) -> Unit)? = null
     var onToolClick: ((String) -> Unit)? = null
 
     private val binding: SidePanelLayoutBinding = SidePanelLayoutBinding.inflate(LayoutInflater.from(context), this, true)
@@ -551,7 +551,7 @@ class SidePanelView @JvmOverloads constructor(
         if (navigationStack.isNotEmpty()) {
             navigationStack.pop()
             updateNavigationUI()
-            onBackNavigation?.invoke()
+            onBackNavigation?.invoke(navigationStack.peek())
         }
     }
 
@@ -623,6 +623,9 @@ class SidePanelView @JvmOverloads constructor(
 
         if (panelPrefs.hideBackground) {
             binding.panelCard.background = null
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                binding.panelCard.clipToOutline = false
+            }
         } else {
             val theme = panelPrefs.uiTheme
             val preset = panelPrefs.appearancePreset
@@ -631,11 +634,11 @@ class SidePanelView @JvmOverloads constructor(
                 if (preset == AppearancePresetKey.CUSTOM && theme == PanelPreferences.THEME_HYPEROS) 16
                 else panelPrefs.panelCornerRadius
             ).toFloat()
-            
+
             val shape = GradientDrawable().apply {
                 setColor(bgColor)
                 cornerRadius = radius
-                
+
                 if (preset != AppearancePresetKey.CUSTOM) {
                     val content = if (panelPrefs.panelUsesDarkContent()) Color.BLACK else Color.WHITE
                     setStroke(
@@ -655,29 +658,28 @@ class SidePanelView @JvmOverloads constructor(
                 }
             }
             binding.panelCard.background = shape
-            
-            val contentColor = if (panelPrefs.panelUsesDarkContent()) Color.BLACK else Color.WHITE
-            val iconColorList = ColorStateList.valueOf(contentColor)
-            binding.btnClose.imageTintList = iconColorList
-            binding.btnScreenshot.imageTintList = iconColorList
-            binding.btnVolumeUp.imageTintList = iconColorList
-            binding.btnVolumeDown.imageTintList = iconColorList
-            binding.btnBrightnessUp.imageTintList = iconColorList
-            binding.btnBrightnessDown.imageTintList = iconColorList
-            binding.btnReboot.imageTintList = iconColorList
-            binding.btnBack.imageTintList = iconColorList
-
-            binding.tvRamUsage.setTextColor(contentColor)
-            binding.tvBatTemp.setTextColor(contentColor)
-            tintTextViews(
-                binding.toolsContainer,
-                androidx.core.graphics.ColorUtils.setAlphaComponent(contentColor, 176)
-            )
-
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 binding.panelCard.clipToOutline = true
             }
         }
+
+        val contentColor = if (panelPrefs.panelUsesDarkContent()) Color.BLACK else Color.WHITE
+        val iconColorList = ColorStateList.valueOf(contentColor)
+        binding.btnClose.imageTintList = iconColorList
+        binding.btnScreenshot.imageTintList = iconColorList
+        binding.btnVolumeUp.imageTintList = iconColorList
+        binding.btnVolumeDown.imageTintList = iconColorList
+        binding.btnBrightnessUp.imageTintList = iconColorList
+        binding.btnBrightnessDown.imageTintList = iconColorList
+        binding.btnReboot.imageTintList = iconColorList
+        binding.btnBack.imageTintList = iconColorList
+
+        binding.tvRamUsage.setTextColor(contentColor)
+        binding.tvBatTemp.setTextColor(contentColor)
+        tintTextViews(
+            binding.toolsContainer,
+            androidx.core.graphics.ColorUtils.setAlphaComponent(contentColor, 176)
+        )
         
         val isGameMode = false // panelPrefs.getGameApps().contains(panelPrefs.currentForegroundPackage)
         val showSysInfoEffective = panelPrefs.showSysInfo || isGameMode

@@ -1,6 +1,6 @@
 # Codex Connector Review Remediation — 2026-09-22
 
-Status: **SECOND REVIEW ROUND REMEDIATED LOCALLY — another fresh Codex review required before P4 merge**
+Status: **THIRD REVIEW ROUND PENDING — round-2 findings remediated locally; fresh Codex review required before R0 closes**
 Canonical tracker: GitHub Issue #1  
 Reviewed PRs: #2, #3, #4, #5  
 Source: `chatgpt-codex-connector[bot]` GitHub reviews/comments.
@@ -9,7 +9,7 @@ Source: `chatgpt-codex-connector[bot]` GitHub reviews/comments.
 
 The earlier implementation merged P0–P3 before all Codex Connector review comments had been reconciled. This document is the canonical reconciliation record. No later phase may be declared complete merely because CI is green; every applicable Codex finding below must be either fixed with evidence or explicitly documented as not applicable/superseded.
 
-As of 2026-09-22, **21 findings were inspected**. The original 1 resolved finding plus all 20 actionable findings now have local remediation on feat/sideflow-p4-appearance-presets. The R0 gate remains open until the fresh Codex Connector review and exact-head CI are reconciled.
+As of 2026-09-22, **31 Codex findings were inspected** across the historical PRs and two PR #6 review rounds. All are now remediated locally on feat/sideflow-p4-appearance-presets, but the R0 gate remains open until a fresh review of the new exact HEAD and exact-head CI are both clean.
 
 ## PR #2 — bootstrap/rebrand
 
@@ -121,6 +121,25 @@ A focused static pass over the appearance implementation found three adjacent de
 - Unit tests: **46/46 PASS**.
 - git diff --check: **PASS**.
 - A new Codex review is required on the resulting exact HEAD before R0 can close.
+
+## PR #6 — fresh R0/P4 review round 2
+
+Codex reviewed c68ab48 and completed on 2026-09-22 with five additional P2 findings. All five are remediated locally in the next commit; round 3 review remains mandatory.
+
+| ID | Severity | Finding | Current assessment | Remediation evidence |
+| --- | --- | --- | --- | --- |
+| r4071088694 | P2 | Legacy appearance imports can leave a stale named preset active | **RESOLVED (local)** | Imports without an appearance-preset key now mark appearance Custom when legacy appearance fields are present; pure policy regression added. |
+| r4071088700 | P2 | Hidden-background mode derives dark content from an invisible light surface | **RESOLVED (local)** | Hidden background now has an explicit light-content policy; app labels/pseudo icons plus panel buttons/tool text are retinted consistently and stale clipping is cleared. |
+| r4071088705 | P2 | Named preset -> Custom transition loses the preset surface color | **RESOLVED (local)** | Transition materializes the current effective preset base surface (including Material You dynamic surface) into the stored custom color before switching the marker to Custom; custom rendering uses the stored surface. |
+| r4071088714 | P2 | Back from a nested folder jumps to root instead of parent | **RESOLVED (local)** | SidePanelView now reports the remaining parent folder ID after stack pop; FloatingPanelService refreshes that parent instead of unconditionally clearing currentFolderId. |
+| r4071088717 | P2 | Unselected picker edit icons stay near-white on Frosted Light | **RESOLVED (local)** | PickerAdapter centralizes inactive edit-icon tint and uses a dark slate tint in light mode across full bind, payload bind and toggle paths. |
+
+### PR #6 round-2 local validation
+
+- Forced unit test execution after fixes: **47/47 PASS**.
+- Gradle testDebugUnitTest + assembleDebug: **PASS**.
+- git diff --check: **PASS**.
+- A new exact-head Codex review is required; P4 remains draft/unmerged.
 
 ## Mandatory remediation order
 

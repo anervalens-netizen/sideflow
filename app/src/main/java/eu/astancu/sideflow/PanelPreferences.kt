@@ -294,6 +294,19 @@ class PanelPreferences(context: Context) {
     fun importFromJson(json: String): Boolean {
         return try {
             val obj = org.json.JSONObject(json)
+            val importsAppearanceValues = listOf(
+                KEY_PANEL_BG_COLOR,
+                KEY_PANEL_OPACITY,
+                KEY_BLUR_ENABLED,
+                KEY_BLUR_AMOUNT,
+                KEY_PANEL_RADIUS,
+                KEY_UI_THEME,
+                KEY_HIDE_BG
+            ).any(obj::has)
+            val treatLegacyAppearanceAsCustom = AppearancePresetCatalog.shouldTreatLegacyImportAsCustom(
+                hasPresetKey = obj.has(KEY_APPEARANCE_PRESET),
+                importsAppearanceValues = importsAppearanceValues
+            )
             prefs.edit {
                 // Strings
                 if (obj.has(KEY_PANEL_APPS)) putString(KEY_PANEL_APPS, obj.getString(KEY_PANEL_APPS))
@@ -308,7 +321,14 @@ class PanelPreferences(context: Context) {
                 if (obj.has(KEY_ACCENT_COLOR)) putString(KEY_ACCENT_COLOR, obj.getString(KEY_ACCENT_COLOR))
                 if (obj.has(KEY_PANEL_BG_COLOR)) putString(KEY_PANEL_BG_COLOR, obj.getString(KEY_PANEL_BG_COLOR))
                 if (obj.has(KEY_UI_THEME)) putString(KEY_UI_THEME, obj.getString(KEY_UI_THEME))
-                if (obj.has(KEY_APPEARANCE_PRESET)) putString(KEY_APPEARANCE_PRESET, AppearancePresetKey.fromStorage(obj.getString(KEY_APPEARANCE_PRESET)).storageValue)
+                if (obj.has(KEY_APPEARANCE_PRESET)) {
+                    putString(
+                        KEY_APPEARANCE_PRESET,
+                        AppearancePresetKey.fromStorage(obj.getString(KEY_APPEARANCE_PRESET)).storageValue
+                    )
+                } else if (treatLegacyAppearanceAsCustom) {
+                    putString(KEY_APPEARANCE_PRESET, AppearancePresetKey.CUSTOM.storageValue)
+                }
                 if (obj.has(KEY_ICON_SHAPE)) putString(KEY_ICON_SHAPE, obj.getString(KEY_ICON_SHAPE))
                 if (obj.has(KEY_PILL_COLOR)) putString(KEY_PILL_COLOR, obj.getString(KEY_PILL_COLOR))
                 if (obj.has(KEY_ICON_PACK)) putString(KEY_ICON_PACK, obj.getString(KEY_ICON_PACK))
@@ -672,8 +692,8 @@ class PanelPreferences(context: Context) {
         }
     }
 
-    fun resolvedPanelBackgroundColor(): Int {
-        val baseColor = when {
+    private fun resolvedPanelBaseBackgroundColor(): Int {
+        return when {
             appearancePreset == AppearancePresetKey.MATERIAL_YOU -> {
                 val dynamicContext = com.google.android.material.color.DynamicColors
                     .wrapContextIfAvailable(appContext)
@@ -687,12 +707,22 @@ class PanelPreferences(context: Context) {
                 runCatching { android.graphics.Color.parseColor(panelBackgroundColor) }
                     .getOrDefault(android.graphics.Color.parseColor(DEFAULT_PANEL_BG))
             }
-            uiTheme == THEME_ORIGIN -> android.graphics.Color.parseColor("#FF1F1F1F")
-            uiTheme == THEME_HYPEROS -> android.graphics.Color.parseColor("#FF252525")
             else -> runCatching { android.graphics.Color.parseColor(panelBackgroundColor) }
                 .getOrDefault(android.graphics.Color.parseColor(DEFAULT_PANEL_BG))
         }
-        return SideFlowPolicy.applyOpacityToArgb(baseColor, panelOpacity)
+    }
+
+    fun resolvedPanelBackgroundColor(): Int =
+        SideFlowPolicy.applyOpacityToArgb(resolvedPanelBaseBackgroundColor(), panelOpacity)
+
+    fun markAppearanceCustomPreservingSurface() {
+        if (appearancePreset == AppearancePresetKey.CUSTOM) return
+        val baseColor = resolvedPanelBaseBackgroundColor()
+        val storedColor = String.format(java.util.Locale.US, "#%08X", baseColor)
+        prefs.edit {
+            putString(KEY_PANEL_BG_COLOR, storedColor)
+            putString(KEY_APPEARANCE_PRESET, AppearancePresetKey.CUSTOM.storageValue)
+        }
     }
 
     fun resolvedPanelAccentColor(): Int {
@@ -710,6 +740,7 @@ class PanelPreferences(context: Context) {
     }
 
     fun panelUsesDarkContent(): Boolean {
+        if (hideBackground) return false
         val opaque = androidx.core.graphics.ColorUtils.setAlphaComponent(resolvedPanelBackgroundColor(), 255)
         return androidx.core.graphics.ColorUtils.calculateLuminance(opaque) >= 0.6
     }

@@ -68,4 +68,9 @@ object AppearancePresetCatalog {
         AppearancePresetKey.AMOLED -> amoled
         AppearancePresetKey.MATERIAL_YOU -> materialYou
     }
+
+    fun shouldTreatLegacyImportAsCustom(
+        hasPresetKey: Boolean,
+        importsAppearanceValues: Boolean
+    ): Boolean = !hasPresetKey && importsAppearanceValues
 }

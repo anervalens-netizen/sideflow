@@ -595,6 +595,11 @@ class AppPickerPanelView @JvmOverloads constructor(
             notifyDataSetChanged()
         }
 
+        private fun inactiveEditIconTint(): android.content.res.ColorStateList =
+            android.content.res.ColorStateList.valueOf(
+                if (isLightMode) Color.parseColor("#64748B") else Color.parseColor("#B3FFFFFF")
+            )
+
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PickerViewHolder {
             val layoutId = if (isNotificationType) {
                 R.layout.item_picker_notification
@@ -680,7 +685,7 @@ class AppPickerPanelView @JvmOverloads constructor(
             val isSelected = panelPrefs.isInPanel(app.identifier)
             if (isEditMode) {
                 holder.ivCheck.visibility = View.VISIBLE
-                val iconTint = if (isSelected) accentColorStateList else android.content.res.ColorStateList.valueOf(Color.parseColor("#B3FFFFFF"))
+                val iconTint = if (isSelected) accentColorStateList else inactiveEditIconTint()
                 if (holder.ivCheck is ImageView) {
                     holder.ivCheck.imageTintList = iconTint
                 }
@@ -701,8 +706,7 @@ class AppPickerPanelView @JvmOverloads constructor(
                 .start()
 
             if (plusView is ImageView) {
-                val tint = if (newState) accentColorStateList
-                           else android.content.res.ColorStateList.valueOf(Color.parseColor("#B3FFFFFF"))
+                val tint = if (newState) accentColorStateList else inactiveEditIconTint()
                 plusView.imageTintList = tint
             }
 
@@ -842,7 +846,7 @@ class AppPickerPanelView @JvmOverloads constructor(
                 if (isEditMode) {
                     holder.ivCheck.visibility = View.VISIBLE
                     val isSelected = app.isInPanel
-                    val iconTint = if (isSelected) accentColorStateList else android.content.res.ColorStateList.valueOf(Color.parseColor("#B3FFFFFF"))
+                    val iconTint = if (isSelected) accentColorStateList else inactiveEditIconTint()
                     if (holder.ivCheck is ImageView) {
                         holder.ivCheck.imageTintList = iconTint
                     }

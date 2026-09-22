@@ -52,6 +52,13 @@ class AppearancePresetTest {
     }
 
     @Test
+    fun legacyAppearanceImportClearsStaleNamedPreset() {
+        assertTrue(AppearancePresetCatalog.shouldTreatLegacyImportAsCustom(false, true))
+        assertFalse(AppearancePresetCatalog.shouldTreatLegacyImportAsCustom(true, true))
+        assertFalse(AppearancePresetCatalog.shouldTreatLegacyImportAsCustom(false, false))
+    }
+
+    @Test
     fun customHasNoForcedSpec() {
         assertNull(AppearancePresetCatalog.spec(AppearancePresetKey.CUSTOM))
     }

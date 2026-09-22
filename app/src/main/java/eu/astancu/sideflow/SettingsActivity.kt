@@ -409,6 +409,7 @@ class SettingsActivity : AppCompatActivity() {
             com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
                 .setTitle("UI Style Theme")
                 .setSingleChoiceItems(options, selectedIndex) { dialog, which ->
+                    panelPrefs.markAppearanceCustomPreservingSurface()
                     panelPrefs.uiTheme = values[which]
                     binding.tvUIStyleValue.text = options[which]
                     

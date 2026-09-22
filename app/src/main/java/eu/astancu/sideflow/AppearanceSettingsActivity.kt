@@ -264,7 +264,7 @@ class AppearanceSettingsActivity : AppCompatActivity() {
             com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
                 .setTitle("Panel UI Style")
                 .setSingleChoiceItems(options, selectedIndex) { dialog, which ->
-                    panelPrefs.appearancePreset = AppearancePresetKey.CUSTOM
+                    panelPrefs.markAppearanceCustomPreservingSurface()
                     panelPrefs.uiTheme = values[which]
                     binding.tvPresetValue.text = AppearancePresetKey.CUSTOM.displayName
                     binding.tvUIStyleValue.text = options[which]
@@ -416,7 +416,7 @@ class AppearanceSettingsActivity : AppCompatActivity() {
 
     private fun markCustomPreset() {
         if (syncingUi || panelPrefs.appearancePreset == AppearancePresetKey.CUSTOM) return
-        panelPrefs.appearancePreset = AppearancePresetKey.CUSTOM
+        panelPrefs.markAppearanceCustomPreservingSurface()
         binding.tvPresetValue.text = AppearancePresetKey.CUSTOM.displayName
     }
 

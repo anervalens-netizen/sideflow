@@ -668,8 +668,8 @@ class FloatingPanelService : Service() {
                 currentFolderId = folderId
                 refreshApps()
             }
-            onBackNavigation = {
-                currentFolderId = null // Simple logic for now: only 1-level folders
+            onBackNavigation = { parentFolderId ->
+                currentFolderId = parentFolderId
                 refreshApps()
             }
             onToolClick = { toolId ->
