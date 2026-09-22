@@ -92,7 +92,7 @@ Fresh Codex review of c6350c66 completed on 2026-09-22 and produced five new act
 
 | ID | Severity | Finding | Current assessment | Remediation evidence |
 | --- | --- | --- | --- | --- |
-| r4070841420 | P2 | Reset All Settings can leave the shelf empty instead of restoring default apps | **RESOLVED (local)** | Reset now removes both shelf-presence keys and SettingsMainActivity explicitly reseeds AppRepository.getTop5Apps() before refresh. |
+| r4070841420 | P2 | Reset All Settings can leave the shelf empty instead of restoring default apps | **RESOLVED (local)** | Reset now removes both shelf-presence keys and both reset entry points (SettingsMainActivity and legacy SettingsActivity) explicitly reseed AppRepository.getTop5Apps() before refresh. |
 | r4070841425 | P2 | Narrow rich-item grid fitting ignores RecyclerView/inner horizontal padding | **RESOLVED (local)** | Fitting now uses usable grid width after 16dp RecyclerView margins and accepts layout-specific inner padding; rich 180dp/6-column regression added. |
 | r4070841433 | P2 | Material You resolves static theme attributes instead of dynamic wallpaper colors | **RESOLVED (local)** | Material surface/accent resolution now uses DynamicColors.wrapContextIfAvailable(appContext) before resolving Material attributes, including service-side preference reads. |
 | r4070841436 | P2 | Reset-radius mutates appearance while leaving named preset active | **RESOLVED (local)** | Radius reset now calls markCustomPreset() before changing the value. |

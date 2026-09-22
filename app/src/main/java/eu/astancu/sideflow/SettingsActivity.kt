@@ -10,6 +10,8 @@ import android.widget.SeekBar
 import com.google.android.material.snackbar.Snackbar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import eu.astancu.sideflow.databinding.ActivitySettingsM3Binding
 
 /**
@@ -470,9 +472,13 @@ class SettingsActivity : AppCompatActivity() {
 
         binding.btnResetDefaults.setOnClickListener {
             panelPrefs.resetToDefaults()
-            loadCurrentSettings() 
-            applyAndShow()
-            binding.root.showModernToast("Settings Reset to Defaults")
+            lifecycleScope.launch {
+                val defaultApps = AppRepository(this@SettingsActivity).getTop5Apps()
+                panelPrefs.setPanelApps(defaultApps)
+                loadCurrentSettings()
+                applyAndShow()
+                binding.root.showModernToast("Settings Reset to Defaults")
+            }
         }
 
         binding.btnResetUIColors.setOnClickListener {
