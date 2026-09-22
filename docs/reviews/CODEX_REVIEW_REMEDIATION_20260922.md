@@ -331,6 +331,21 @@ Fresh reviews of `03565c0` produced one repository AI-review P2 and one Codex P2
 - `git diff --check`: **PASS**.
 - PR #7 remains draft/unmerged; fresh exact-head Codex + repository AI review and CI are mandatory.
 
+## PR #7 — final review round 4
+
+Codex reviewed `dac9bbb2` and produced one additional P2. It is remediated locally in the next commit; another exact-head review remains mandatory.
+
+| ID | Severity | Finding | Current assessment | Remediation evidence |
+| --- | --- | --- | --- | --- |
+| r4075746280 | P2 | Named non-Material preset -> Custom transition stores a stale preference accent instead of the fixed accent actually rendered by the preset | **RESOLVED (local)** | Picker accent resolution is now centralized in PanelPreferences. Named presets without an explicit custom accent use the same fixed light/dark fallback for rendering and for Named -> Custom materialization; Material You/custom overrides still use the resolved dynamic/stored accent. Regression covers the fallback values and non-Material preset policy. |
+
+### PR #7 final-round-4 local validation
+
+- Gradle `testDebugUnitTest assembleDebug`: **PASS**.
+- Unit tests: **63/63 PASS**.
+- `git diff --check`: **PASS**.
+- PR #7 remains draft/unmerged; fresh exact-head Codex + repository AI review and CI are mandatory.
+
 ## Mandatory remediation order
 
 1. **Privacy / misleading UI first:** PR #2 donation UI, backup filename ignore, PR #5 Auto Backup and export warning.

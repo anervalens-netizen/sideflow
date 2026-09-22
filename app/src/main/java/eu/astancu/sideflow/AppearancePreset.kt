@@ -87,4 +87,7 @@ object AppearancePresetCatalog {
         preset == AppearancePresetKey.MATERIAL_YOU ||
             preset == AppearancePresetKey.CUSTOM ||
             useCustomAccent
+
+    fun defaultPickerAccentHex(surfaceUsesDarkContent: Boolean): String =
+        if (surfaceUsesDarkContent) "#4F46E5" else "#4A9EFF"
 }

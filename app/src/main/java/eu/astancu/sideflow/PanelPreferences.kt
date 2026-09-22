@@ -728,7 +728,7 @@ class PanelPreferences(context: Context) {
     fun markAppearanceCustomPreservingSurface() {
         if (appearancePreset == AppearancePresetKey.CUSTOM) return
         val baseColor = resolvedPanelBaseBackgroundColor()
-        val effectiveAccent = resolvedPanelAccentColor()
+        val effectiveAccent = resolvedPickerAccentColor(pickerUsesDarkContent())
         val storedColor = String.format(java.util.Locale.US, "#%08X", baseColor)
         val storedAccent = String.format(java.util.Locale.US, "#%08X", effectiveAccent)
         prefs.edit {
@@ -750,6 +750,21 @@ class PanelPreferences(context: Context) {
         }
         return runCatching { android.graphics.Color.parseColor(accentColor) }
             .getOrDefault(android.graphics.Color.parseColor(DEFAULT_ACCENT_COLOR))
+    }
+
+    fun resolvedPickerAccentColor(surfaceUsesDarkContent: Boolean): Int {
+        return if (
+            AppearancePresetCatalog.shouldUseResolvedPickerAccent(
+                preset = appearancePreset,
+                useCustomAccent = useCustomAccent
+            )
+        ) {
+            resolvedPanelAccentColor()
+        } else {
+            android.graphics.Color.parseColor(
+                AppearancePresetCatalog.defaultPickerAccentHex(surfaceUsesDarkContent)
+            )
+        }
     }
 
     private fun renderedSurfaceUsesDarkContent(surfaceHidden: Boolean): Boolean {

@@ -281,18 +281,8 @@ class AppPickerPanelView @JvmOverloads constructor(
         rvPickerGrid.layoutParams = lp
     }
 
-    private fun resolvedPickerAccentColor(lightPanel: Boolean): Int {
-        return if (
-            AppearancePresetCatalog.shouldUseResolvedPickerAccent(
-                preset = panelPrefs.appearancePreset,
-                useCustomAccent = panelPrefs.useCustomAccent
-            )
-        ) {
-            panelPrefs.resolvedPanelAccentColor()
-        } else {
-            if (lightPanel) Color.parseColor("#4F46E5") else Color.parseColor("#4A9EFF")
-        }
-    }
+    private fun resolvedPickerAccentColor(lightPanel: Boolean): Int =
+        panelPrefs.resolvedPickerAccentColor(lightPanel)
 
     private fun ensurePickerLayoutMatchesTheme() {
         val theme = panelPrefs.uiTheme

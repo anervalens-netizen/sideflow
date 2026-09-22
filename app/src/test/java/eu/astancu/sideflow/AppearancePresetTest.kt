@@ -87,6 +87,24 @@ class AppearancePresetTest {
     }
 
     @Test
+    fun namedPresetFallbackAccentMatchesRenderedLightAndDarkSurfaces() {
+        assertEquals(
+            "#4F46E5",
+            AppearancePresetCatalog.defaultPickerAccentHex(surfaceUsesDarkContent = true)
+        )
+        assertEquals(
+            "#4A9EFF",
+            AppearancePresetCatalog.defaultPickerAccentHex(surfaceUsesDarkContent = false)
+        )
+        assertFalse(
+            AppearancePresetCatalog.shouldUseResolvedPickerAccent(
+                AppearancePresetKey.FROSTED_LIGHT,
+                useCustomAccent = false
+            )
+        )
+    }
+
+    @Test
     fun originThemeAllowsAccentPickerWhenCustomAccentOverrideIsEnabled() {
         assertFalse(
             AppearancePresetCatalog.canEditAccent(
