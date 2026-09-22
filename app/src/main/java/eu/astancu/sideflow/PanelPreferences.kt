@@ -17,6 +17,7 @@ class PanelPreferences(context: Context) {
     companion object {
         private const val PREFS_NAME = "side_panel_prefs"
         private const val KEY_PANEL_APPS = "panel_apps"
+        private const val KEY_SHELF_CONFIG = "shelf_config_v1"
         private const val KEY_PANEL_SIDE = "panel_side"
         private const val KEY_AUTO_START = "auto_start"
         private const val KEY_SHOW_PILL = "show_pill"
@@ -204,6 +205,8 @@ class PanelPreferences(context: Context) {
         obj.put("_app", "SideFlow")
 
         // Strings
+        obj.put(KEY_SHELF_CONFIG, org.json.JSONObject(ShelfConfigJson.encode(getShelfConfig())))
+
         val strings = mapOf(
             KEY_PANEL_APPS to getPanelApps().joinToString(DELIMITER),
             KEY_GAME_APPS to getGameApps().joinToString(DELIMITER),
@@ -291,6 +294,12 @@ class PanelPreferences(context: Context) {
             prefs.edit {
                 // Strings
                 if (obj.has(KEY_PANEL_APPS)) putString(KEY_PANEL_APPS, obj.getString(KEY_PANEL_APPS))
+                if (obj.has(KEY_SHELF_CONFIG)) {
+                    val shelfJson = obj.getJSONObject(KEY_SHELF_CONFIG).toString()
+                    ShelfConfigJson.decode(shelfJson)?.let { putString(KEY_SHELF_CONFIG, ShelfConfigJson.encode(it)) }
+                } else if (obj.has(KEY_PANEL_APPS)) {
+                    remove(KEY_SHELF_CONFIG)
+                }
                 if (obj.has(KEY_GAME_APPS)) putString(KEY_GAME_APPS, obj.getString(KEY_GAME_APPS))
                 if (obj.has(KEY_PANEL_SIDE)) putString(KEY_PANEL_SIDE, obj.getString(KEY_PANEL_SIDE))
                 if (obj.has(KEY_ACCENT_COLOR)) putString(KEY_ACCENT_COLOR, obj.getString(KEY_ACCENT_COLOR))
@@ -425,6 +434,7 @@ class PanelPreferences(context: Context) {
             putBoolean(KEY_REMEMBER_SCROLL, false)
             putBoolean(KEY_AUTO_SHOW_KEYBOARD, false)
             putString(KEY_PANEL_APPS, "")
+            remove(KEY_SHELF_CONFIG)
             putString(KEY_GAME_APPS, "")
             putBoolean(KEY_AUTO_HIDE_FULLSCREEN, false)
             putString(KEY_FULLSCREEN_WHITELIST, "")
@@ -764,7 +774,30 @@ class PanelPreferences(context: Context) {
     val appearanceKey: String
         get() = "shape:$iconShape|pack:$selectedIconPack|theme:$uiTheme"
 
-    fun getPanelApps(): List<String> {
+    fun getShelfConfig(): ShelfConfig {
+        val stored = prefs.getString(KEY_SHELF_CONFIG, null)
+        val decoded = stored?.let(ShelfConfigJson::decode)
+        if (decoded != null) return decoded
+
+        val migrated = ShelfConfigOps.fromLegacyIdentifiers(readLegacyPanelApps())
+        setShelfConfig(migrated)
+        return migrated
+    }
+
+    fun setShelfConfig(config: ShelfConfig) {
+        val normalized = ShelfConfigOps.normalize(config)
+        val references = normalized.sections.flatMap { section ->
+            section.items.map { it.reference }
+        }
+        prefs.edit {
+            putString(KEY_SHELF_CONFIG, ShelfConfigJson.encode(normalized))
+            // Keep the legacy flat key as a compatibility mirror only. The
+            // sectioned shelf is canonical from this point forward.
+            putString(KEY_PANEL_APPS, references.distinct().joinToString(DELIMITER))
+        }
+    }
+
+    private fun readLegacyPanelApps(): List<String> {
         val raw = prefs.getString(KEY_PANEL_APPS, "") ?: ""
         return if (raw.isBlank()) emptyList()
         else raw.split(DELIMITER)
@@ -772,26 +805,85 @@ class PanelPreferences(context: Context) {
             .distinct()
     }
 
+    fun getPanelApps(): List<String> =
+        ShelfConfigOps.allItems(getShelfConfig()).map { it.reference }
+
     fun setPanelApps(identifiers: List<String>) {
-        val unique = identifiers.filter { it.isNotBlank() }.distinct()
-        prefs.edit { putString(KEY_PANEL_APPS, unique.joinToString(DELIMITER)) }
+        setShelfConfig(ShelfConfigOps.fromLegacyIdentifiers(identifiers))
     }
 
     fun addApp(identifier: String) {
-        val current = getPanelApps().toMutableList()
-        if (!current.contains(identifier)) {
-            current.add(identifier)
-            setPanelApps(current)
-        }
+        val item = ShelfConfigOps.legacyItem(identifier)
+        setShelfConfig(ShelfConfigOps.addItem(getShelfConfig(), item))
+    }
+
+    fun addShelfItem(item: ShelfItem, sectionId: String? = null) {
+        setShelfConfig(ShelfConfigOps.addItem(getShelfConfig(), item, sectionId))
     }
 
     fun removeApp(identifier: String) {
-        val current = getPanelApps().toMutableList()
-        current.remove(identifier)
-        setPanelApps(current)
+        val item = ShelfConfigOps.legacyItem(identifier)
+        setShelfConfig(ShelfConfigOps.removeItem(getShelfConfig(), item.identityKey))
     }
 
-    fun isInPanel(identifier: String): Boolean = getPanelApps().contains(identifier)
+    fun removeShelfItem(itemId: String) {
+        setShelfConfig(ShelfConfigOps.removeItem(getShelfConfig(), itemId))
+    }
+
+    fun updateSection(
+        sectionId: String,
+        title: String? = null,
+        columns: Int? = null,
+        showTitle: Boolean? = null
+    ) {
+        setShelfConfig(
+            ShelfConfigOps.updateSection(
+                getShelfConfig(),
+                sectionId,
+                title = title,
+                columns = columns,
+                showTitle = showTitle
+            )
+        )
+    }
+
+    fun addSection(title: String = "New section"): String {
+        val before = getShelfConfig()
+        val after = ShelfConfigOps.addSection(before, title)
+        setShelfConfig(after)
+        return after.sections.last().id
+    }
+
+    fun moveSection(fromIndex: Int, toIndex: Int) {
+        setShelfConfig(ShelfConfigOps.moveSection(getShelfConfig(), fromIndex, toIndex))
+    }
+
+    fun removeSection(sectionId: String) {
+        setShelfConfig(ShelfConfigOps.removeSection(getShelfConfig(), sectionId))
+    }
+
+    fun moveShelfItem(itemId: String, targetSectionId: String, targetIndex: Int) {
+        setShelfConfig(
+            ShelfConfigOps.moveItem(
+                getShelfConfig(),
+                itemId,
+                targetSectionId,
+                targetIndex
+            )
+        )
+    }
+
+    fun applyShelfPanelOrder(orderedItemIdsBySection: Map<String, List<String>>) {
+        setShelfConfig(
+            ShelfConfigOps.applyPanelOrder(
+                getShelfConfig(),
+                orderedItemIdsBySection
+            )
+        )
+    }
+
+    fun isInPanel(identifier: String): Boolean =
+        getPanelApps().contains(identifier)
 
     var panelSide: String
         get() = prefs.getString(KEY_PANEL_SIDE, DEFAULT_SIDE) ?: DEFAULT_SIDE

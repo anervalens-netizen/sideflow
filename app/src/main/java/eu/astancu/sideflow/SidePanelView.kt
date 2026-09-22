@@ -105,7 +105,8 @@ class SidePanelView @JvmOverloads constructor(
         adapter = PanelAppsAdapter(
             context,
             onRemove = { removedApp ->
-                panelPrefs.removeApp(removedApp.identifier)
+                removedApp.shelfItemId?.let(panelPrefs::removeShelfItem)
+                    ?: panelPrefs.removeApp(removedApp.identifier)
                 onAppsChanged?.invoke()
             },
             onAddClick = { isEdit -> onAddClick?.invoke(isEdit) },
@@ -130,7 +131,14 @@ class SidePanelView @JvmOverloads constructor(
 
         currentCols = panelPrefs.panelColumns
         adapter.setColumns(currentCols)
-        binding.rvPanelApps.layoutManager = GridLayoutManager(context, currentCols)
+        binding.rvPanelApps.layoutManager = GridLayoutManager(
+            context,
+            PanelAppsAdapter.GRID_SPAN_COUNT
+        ).apply {
+            spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
+                override fun getSpanSize(position: Int): Int = adapter.getSpanSize(position)
+            }
+        }
         binding.rvPanelApps.adapter = adapter
 
         binding.rvPanelApps.setHasFixedSize(false)
@@ -156,23 +164,43 @@ class SidePanelView @JvmOverloads constructor(
                 return adapter.isEditMode
             }
 
+            override fun getMovementFlags(
+                recyclerView: androidx.recyclerview.widget.RecyclerView,
+                viewHolder: androidx.recyclerview.widget.RecyclerView.ViewHolder
+            ): Int {
+                val position = viewHolder.bindingAdapterPosition
+                if (!adapter.isEditMode || !adapter.isMovable(position)) {
+                    return makeMovementFlags(0, 0)
+                }
+                return makeMovementFlags(
+                    androidx.recyclerview.widget.ItemTouchHelper.UP or
+                        androidx.recyclerview.widget.ItemTouchHelper.DOWN or
+                        androidx.recyclerview.widget.ItemTouchHelper.LEFT or
+                        androidx.recyclerview.widget.ItemTouchHelper.RIGHT,
+                    0
+                )
+            }
+
             override fun onMove(
                 recyclerView: androidx.recyclerview.widget.RecyclerView,
                 viewHolder: androidx.recyclerview.widget.RecyclerView.ViewHolder,
                 target: androidx.recyclerview.widget.RecyclerView.ViewHolder
             ): Boolean {
-                if (viewHolder is PanelAppsAdapter.AddViewHolder) return false
                 val from = viewHolder.bindingAdapterPosition
+                if (!adapter.isMovable(from)) return false
+
                 var to = target.bindingAdapterPosition
-                
+                if (to == androidx.recyclerview.widget.RecyclerView.NO_POSITION) return false
+
                 if (target is PanelAppsAdapter.AddViewHolder) {
-                    // Snap to the last available app position
-                    to = adapter.itemCount - 2
+                    to = (adapter.itemCount - 2).coerceAtLeast(0)
+                } else if (target is PanelAppsAdapter.SectionViewHolder) {
+                    // Dropping on a section header means “first item in section”.
+                    to = (to + 1).coerceAtMost(adapter.itemCount - 1)
                 }
-                
-                if (from == androidx.recyclerview.widget.RecyclerView.NO_POSITION || to == androidx.recyclerview.widget.RecyclerView.NO_POSITION) return false
-                if (from == to) return false
-                
+
+                if (from == androidx.recyclerview.widget.RecyclerView.NO_POSITION || from == to) return false
+
                 adapter.moveItem(from, to)
                 return true
             }
@@ -181,10 +209,26 @@ class SidePanelView @JvmOverloads constructor(
 
             override fun clearView(recyclerView: androidx.recyclerview.widget.RecyclerView, viewHolder: androidx.recyclerview.widget.RecyclerView.ViewHolder) {
                 super.clearView(recyclerView, viewHolder)
-                val apps = adapter.getApps()
-                val identifiers = apps.map { it.identifier }
-                
-                panelPrefs.setPanelApps(identifiers)
+                val order = linkedMapOf<String, MutableList<String>>()
+                var currentSectionId: String? = null
+
+                adapter.getApps().forEach { entry ->
+                    if (entry.type == AppInfo.Type.SECTION_HEADER) {
+                        currentSectionId = entry.sectionId?.takeUnless { it.startsWith("__") }
+                        currentSectionId?.let { order.getOrPut(it) { mutableListOf() } }
+                    } else {
+                        val sectionId = currentSectionId
+                        val itemId = entry.shelfItemId
+                        if (sectionId != null && itemId != null) {
+                            order.getOrPut(sectionId) { mutableListOf() }.add(itemId)
+                        }
+                    }
+                }
+
+                if (order.isNotEmpty()) {
+                    panelPrefs.applyShelfPanelOrder(order)
+                    onAppsChanged?.invoke()
+                }
                 updateSideLayout()
             }
         })
@@ -480,6 +524,7 @@ class SidePanelView @JvmOverloads constructor(
 
     fun animatePickerToggle(isOpen: Boolean) {
         isPickerOpenInternal = isOpen
+        adapter.setCompactMode(isOpen)
         updateSideLayout()
         val targetRotation = if (isOpen) 90f else (if (panelPrefs.panelSide == PanelPreferences.SIDE_RIGHT) 180f else 0f)
         springRotation.animateToFinalPosition(targetRotation)
@@ -488,7 +533,6 @@ class SidePanelView @JvmOverloads constructor(
     fun setColumns(cols: Int) {
         currentCols = cols
         adapter.setColumns(cols)
-        (binding.rvPanelApps.layoutManager as? GridLayoutManager)?.spanCount = currentCols
         updateSideLayout()
     }
 
@@ -541,7 +585,6 @@ class SidePanelView @JvmOverloads constructor(
         if (!isPickerOpenInternal) {
             val isGameMode = false // panelPrefs.getGameApps().contains(panelPrefs.currentForegroundPackage)
             currentCols = if (isGameMode) 2 else panelPrefs.panelColumns
-            (binding.rvPanelApps.layoutManager as? GridLayoutManager)?.spanCount = currentCols
             adapter.setColumns(currentCols)
         }
         applyTheme()

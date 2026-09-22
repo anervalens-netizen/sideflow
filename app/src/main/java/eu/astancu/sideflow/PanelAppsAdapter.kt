@@ -27,8 +27,9 @@ class PanelAppsAdapter(
     private val panelPrefs = PanelPreferences(context)
     private var showAddButton: Boolean = false
     var isEditMode: Boolean = false // Expose to SidePanelView for ItemTouchHelper
-    private var currentColumns: Int = 1
+    private var currentColumns: Int = SideFlowPolicy.DEFAULT_COLUMNS
     private var forceFreeform: Boolean = false
+    private var compactMode: Boolean = false
     
     private var mutableApps = mutableListOf<AppInfo>()
     val currentList: List<AppInfo> get() = mutableApps
@@ -46,12 +47,27 @@ class PanelAppsAdapter(
 
     fun moveItem(from: Int, to: Int) {
         if (from < 0 || to < 0 || from >= mutableApps.size || to >= mutableApps.size) return
+        if (mutableApps[from].type == AppInfo.Type.SECTION_HEADER) return
         val item = mutableApps.removeAt(from)
-        mutableApps.add(to, item)
-        notifyItemMoved(from, to)
+        val target = to.coerceIn(0, mutableApps.size)
+        mutableApps.add(target, item)
+        notifyItemMoved(from, target)
     }
 
-    fun getApps(): List<AppInfo> = mutableApps
+    fun getApps(): List<AppInfo> = mutableApps.toList()
+
+    fun getSpanSize(position: Int): Int {
+        if (position >= mutableApps.size) return GRID_SPAN_COUNT
+        val app = mutableApps[position]
+        if (app.type == AppInfo.Type.SECTION_HEADER || compactMode) return GRID_SPAN_COUNT
+        val columns = SideFlowPolicy.sanitizeColumns(app.sectionColumns ?: currentColumns)
+        return GRID_SPAN_COUNT / columns
+    }
+
+    fun isMovable(position: Int): Boolean =
+        position in mutableApps.indices &&
+            mutableApps[position].type != AppInfo.Type.SECTION_HEADER &&
+            mutableApps[position].shelfItemId != null
 
     fun setShowAddButton(show: Boolean) {
         if (showAddButton != show) {
@@ -63,6 +79,13 @@ class PanelAppsAdapter(
 
     fun setForceFreeform(force: Boolean) {
         forceFreeform = force
+    }
+
+    fun setCompactMode(compact: Boolean) {
+        if (compactMode != compact) {
+            compactMode = compact
+            notifyDataSetChanged()
+        }
     }
 
     fun setColumns(cols: Int) {
@@ -77,15 +100,22 @@ class PanelAppsAdapter(
     }
 
     companion object {
+        const val GRID_SPAN_COUNT = 60
         private const val VIEW_TYPE_APP = 0
         private const val VIEW_TYPE_ADD = 1
         private const val VIEW_TYPE_FOLDER = 2
         private const val VIEW_TYPE_TOOL = 3
+        private const val VIEW_TYPE_SECTION = 4
     }
 
     inner class AppViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val ivIcon: ImageView = itemView.findViewById(R.id.ivAppIcon)
         val tvName: TextView = itemView.findViewById(R.id.tvAppName)
+    }
+
+    inner class SectionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val title: TextView = itemView.findViewById(R.id.tvSectionTitle)
+        val divider: View = itemView.findViewById(R.id.sectionDivider)
     }
 
     inner class AddViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -95,6 +125,7 @@ class PanelAppsAdapter(
     override fun getItemViewType(position: Int): Int {
         if (position >= mutableApps.size) return VIEW_TYPE_ADD
         return when (mutableApps[position].type) {
+            AppInfo.Type.SECTION_HEADER -> VIEW_TYPE_SECTION
             AppInfo.Type.FOLDER -> VIEW_TYPE_FOLDER
             AppInfo.Type.TOOL -> VIEW_TYPE_TOOL
             else -> VIEW_TYPE_APP
@@ -107,10 +138,15 @@ class PanelAppsAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when (viewType) {
+            VIEW_TYPE_SECTION -> {
+                val view = LayoutInflater.from(parent.context)
+                    .inflate(R.layout.item_panel_section_header, parent, false)
+                SectionViewHolder(view)
+            }
             VIEW_TYPE_APP, VIEW_TYPE_FOLDER, VIEW_TYPE_TOOL -> {
                 val layoutId = if (panelPrefs.uiTheme == PanelPreferences.THEME_RICH)
                     R.layout.item_panel_app_rich else R.layout.item_panel_app
-                
+
                 val view = LayoutInflater.from(parent.context)
                     .inflate(layoutId, parent, false)
                 AppViewHolder(view)
@@ -136,11 +172,32 @@ class PanelAppsAdapter(
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val scale = context.getAutoScalingFactor() * panelPrefs.scaleFactor
         val isRich = panelPrefs.uiTheme == PanelPreferences.THEME_RICH
-        
+
+        if (holder is SectionViewHolder) {
+            val section = mutableApps.getOrNull(position) ?: return
+            holder.title.text = section.appName
+            val visible = section.showSectionTitle && !compactMode
+            holder.title.visibility = if (visible) View.VISIBLE else View.GONE
+            holder.divider.visibility = if (visible) View.VISIBLE else View.GONE
+            val lp = holder.itemView.layoutParams
+            lp.height = if (compactMode) 0 else ViewGroup.LayoutParams.WRAP_CONTENT
+            holder.itemView.layoutParams = lp
+            holder.itemView.setPadding(
+                holder.itemView.paddingLeft,
+                if (visible) context.dpToPx(8) else 0,
+                holder.itemView.paddingRight,
+                if (visible) context.dpToPx(4) else 0
+            )
+            return
+        }
+
         if (holder is AppViewHolder) {
             // Restore original sizes + scaling
             var baseIconSize = if (isRich) 44 else 40
-            if (currentColumns == 2) baseIconSize = (baseIconSize * 1.1).toInt() // 10% larger in 2-col
+            val effectiveColumns = if (compactMode) 1 else SideFlowPolicy.sanitizeColumns(
+                mutableApps.getOrNull(position)?.sectionColumns ?: currentColumns
+            )
+            if (effectiveColumns <= 2) baseIconSize = (baseIconSize * 1.1).toInt()
             
             val baseTextSize = if (isRich) 9f else 8f
 
@@ -162,7 +219,7 @@ class PanelAppsAdapter(
             // Fetch from mutableApps so it stays synchronous with rapid dragging
             val app = if (position < mutableApps.size) mutableApps[position] else return
             
-            if (app.type == AppInfo.Type.FOLDER || app.type == AppInfo.Type.TOOL || app.packageName.startsWith("sideflow.shortcut.")) {
+            if (app.type == AppInfo.Type.FOLDER || app.type == AppInfo.Type.TOOL || app.packageName.startsWith("sideflow.shortcut.") || (app.type == AppInfo.Type.URL && app.packageName.isBlank())) {
                 Glide.with(context).clear(holder.ivIcon)
                 val iconRes = when {
                     app.type == AppInfo.Type.FOLDER -> R.drawable.ic_section_tools
@@ -174,6 +231,7 @@ class PanelAppsAdapter(
                     app.packageName == "sideflow.tool.brightness_down" -> R.drawable.ic_brightness_down
                     app.packageName == "sideflow.shortcut.one_hand" -> android.R.drawable.ic_menu_crop
                     app.packageName == "sideflow.shortcut.reboot" -> android.R.drawable.ic_lock_power_off
+                    app.type == AppInfo.Type.URL -> android.R.drawable.ic_menu_view
                     else -> android.R.drawable.sym_def_app_icon
                 }
                 
@@ -224,7 +282,7 @@ class PanelAppsAdapter(
                 SpringAnimator.scalePulse(holder.itemView)
 
                 if (app.type == AppInfo.Type.FOLDER) {
-                    onFolderClick(app.identifier)
+                    onFolderClick(app.shelfItemId ?: app.identifier)
                     return@setOnClickListener
                 }
 
@@ -247,6 +305,9 @@ class PanelAppsAdapter(
                         Intent(context, PanelAccessibilityService::class.java).apply {
                             action = PanelAccessibilityService.ACTION_SHOW_POWER_MENU
                         }
+                    }
+                    app.type == AppInfo.Type.URL && app.intentUri != null -> {
+                        Intent(Intent.ACTION_VIEW, android.net.Uri.parse(app.intentUri))
                     }
                     app.intentUri != null -> {
                         try {

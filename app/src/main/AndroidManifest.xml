@@ -84,6 +84,11 @@
             android:theme="@style/Theme.SidePanel.M3" />
 
         <activity
+            android:name=".ShelfEditorActivity"
+            android:label="Shelf sections"
+            android:theme="@style/Theme.SidePanel.M3" />
+
+        <activity
             android:name=".AppearanceSettingsActivity"
             android:label="Appearance"
             android:theme="@style/Theme.SidePanel.M3" />

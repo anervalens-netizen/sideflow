@@ -269,22 +269,196 @@ class AppRepository(context: Context) {
     }
 
     /**
-     * Returns only the items currently pinned to the panel.
+     * Returns the persisted shelf as a flattened stream of section headers and
+     * resolved items. The adapter uses a 60-span grid so each section can keep
+     * its own 2–6 column density without nested RecyclerViews.
      */
     suspend fun getPanelApps(): List<AppInfo> = withContext(Dispatchers.IO) {
-        val pinnedIdentifiers = panelPrefs.getPanelApps()
-        val allIdentifiers = pinnedIdentifiers.toMutableList()
+        val config = panelPrefs.getShelfConfig()
+        val entries = mutableListOf<AppInfo>()
 
         if (panelPrefs.showNotificationApps) {
-            val notifyApps = NotificationTrackingService.getActiveNotificationPackages()
-            for (pkg in notifyApps.reversed()) {
-                if (!allIdentifiers.contains(pkg)) {
-                    allIdentifiers.add(0, pkg)
+            val pinned = ShelfConfigOps.allItems(config).map { it.reference }.toSet()
+            val notificationPackages = NotificationTrackingService
+                .getActiveNotificationPackages()
+                .filterNot { it in pinned }
+
+            if (notificationPackages.isNotEmpty()) {
+                val notificationSection = ShelfSection(
+                    id = "__notifications__",
+                    title = "Notifications",
+                    columns = SideFlowPolicy.DEFAULT_COLUMNS,
+                    showTitle = true
+                )
+                entries += sectionHeader(notificationSection)
+                notificationPackages.forEach { pkg ->
+                    resolveShelfItem(
+                        ShelfItem(
+                            id = "notification:$pkg",
+                            type = ShelfItemType.APP,
+                            reference = pkg
+                        ),
+                        notificationSection,
+                        persisted = false
+                    )?.let(entries::add)
                 }
             }
         }
-        
-        getAppsForIdentifiers(allIdentifiers)
+
+        config.sections.forEach { section ->
+            entries += sectionHeader(section)
+            section.items.forEach { item ->
+                resolveShelfItem(item, section, persisted = true)?.let(entries::add)
+            }
+        }
+
+        entries
+    }
+
+    suspend fun getFolderItems(folderItemId: String): List<AppInfo> = withContext(Dispatchers.IO) {
+        val config = panelPrefs.getShelfConfig()
+        val folder = ShelfConfigOps.findItem(config, folderItemId) ?: return@withContext emptyList()
+        if (folder.type != ShelfItemType.FOLDER) return@withContext emptyList()
+
+        val section = ShelfSection(
+            id = "folder:${folder.id}",
+            title = folder.label ?: "Folder",
+            columns = SideFlowPolicy.DEFAULT_COLUMNS,
+            showTitle = false,
+            items = folder.children
+        )
+
+        folder.children.mapNotNull { child ->
+            resolveShelfItem(child, section, persisted = false)
+        }
+    }
+
+    private fun sectionHeader(section: ShelfSection): AppInfo =
+        AppInfo(
+            packageName = "sideflow.section.${section.id}",
+            appName = section.title,
+            isInPanel = true,
+            type = AppInfo.Type.SECTION_HEADER,
+            appearanceKey = panelPrefs.appearanceKey,
+            sectionId = section.id,
+            sectionColumns = section.columns,
+            showSectionTitle = section.showTitle
+        )
+
+    private fun resolveShelfItem(
+        item: ShelfItem,
+        section: ShelfSection,
+        persisted: Boolean
+    ): AppInfo? {
+        val common = { info: AppInfo ->
+            info.copy(
+                shelfItemId = item.id.takeIf { persisted },
+                sectionId = section.id,
+                sectionColumns = section.columns,
+                showSectionTitle = section.showTitle
+            )
+        }
+
+        return when (item.type) {
+            ShelfItemType.APP -> {
+                try {
+                    val applicationInfo = packageManager.getApplicationInfo(item.reference, 0)
+                    common(
+                        AppInfo(
+                            packageName = item.reference,
+                            appName = item.label
+                                ?: packageManager.getApplicationLabel(applicationInfo).toString(),
+                            isInPanel = true,
+                            type = AppInfo.Type.APP,
+                            appearanceKey = panelPrefs.appearanceKey
+                        )
+                    )
+                } catch (_: Exception) {
+                    null
+                }
+            }
+
+            ShelfItemType.DEEP_LINK -> {
+                try {
+                    val intent = android.content.Intent.parseUri(
+                        item.reference,
+                        android.content.Intent.URI_INTENT_SCHEME
+                    )
+                    val pkg = item.iconPackage
+                        ?: intent.getPackage()
+                        ?: intent.component?.packageName
+                        ?: ""
+                    val resolveInfo = packageManager.resolveActivity(intent, 0)
+                    common(
+                        AppInfo(
+                            packageName = pkg,
+                            appName = item.label
+                                ?: resolveInfo?.loadLabel(packageManager)?.toString()
+                                ?: intent.component?.shortClassName?.substringAfterLast(".")
+                                ?: "Shortcut",
+                            isInPanel = true,
+                            type = AppInfo.Type.ACTIVITY,
+                            intentUri = item.reference,
+                            activityName = intent.component?.className,
+                            appearanceKey = panelPrefs.appearanceKey
+                        )
+                    )
+                } catch (_: Exception) {
+                    null
+                }
+            }
+
+            ShelfItemType.URL -> {
+                val uri = runCatching { android.net.Uri.parse(item.reference) }.getOrNull()
+                    ?: return null
+                val viewIntent = android.content.Intent(android.content.Intent.ACTION_VIEW, uri)
+                val resolvedPackage = item.iconPackage
+                    ?: packageManager.resolveActivity(viewIntent, 0)?.activityInfo?.packageName
+                    ?: ""
+                common(
+                    AppInfo(
+                        packageName = resolvedPackage,
+                        appName = item.label ?: uri.host ?: "Link",
+                        isInPanel = true,
+                        type = AppInfo.Type.URL,
+                        intentUri = item.reference,
+                        appearanceKey = panelPrefs.appearanceKey
+                    )
+                )
+            }
+
+            ShelfItemType.FOLDER -> common(
+                AppInfo(
+                    packageName = item.reference,
+                    appName = item.label ?: "Folder",
+                    isInPanel = true,
+                    type = AppInfo.Type.FOLDER,
+                    subItems = item.children.map { it.id },
+                    appearanceKey = panelPrefs.appearanceKey
+                )
+            )
+
+            ShelfItemType.SYSTEM_ACTION -> {
+                val type = if (item.reference.startsWith("sideflow.tool.")) {
+                    AppInfo.Type.TOOL
+                } else {
+                    AppInfo.Type.SHORTCUT
+                }
+                val fallbackName = item.reference
+                    .substringAfterLast(".")
+                    .replace("_", " ")
+                    .replaceFirstChar { it.uppercase() }
+                common(
+                    AppInfo(
+                        packageName = item.reference,
+                        appName = item.label ?: fallbackName,
+                        isInPanel = true,
+                        type = type,
+                        appearanceKey = panelPrefs.appearanceKey
+                    )
+                )
+            }
+        }
     }
 
     suspend fun getTop5Apps(): List<String> = withContext(Dispatchers.IO) {

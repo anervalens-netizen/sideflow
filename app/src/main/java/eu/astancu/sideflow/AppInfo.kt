@@ -12,10 +12,14 @@ data class AppInfo(
     val intentUri: String? = null,
     val activityName: String? = null,
     val subItems: List<String>? = null, // identifiers for items inside a folder
-    val appearanceKey: String? = null // Forces redraw when shape/theme changes
+    val appearanceKey: String? = null, // Forces redraw when shape/theme changes
+    val shelfItemId: String? = null,
+    val sectionId: String? = null,
+    val sectionColumns: Int? = null,
+    val showSectionTitle: Boolean = true
 ) {
     enum class Type {
-        APP, ACTIVITY, SHORTCUT, FOLDER, TOOL
+        APP, ACTIVITY, SHORTCUT, URL, FOLDER, TOOL, SECTION_HEADER
     }
 
     /**
