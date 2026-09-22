@@ -126,9 +126,9 @@ This gate exists because green CI alone did not catch several valid cross-featur
 - Subtle section cards and optional section titles.
 
 ### Definition of done
-- Presets render coherently in light/dark modes. **Code complete; device visual validation pending.**
+- Presets render coherently in light/dark modes. **Code/review complete on `9c887343`; device visual validation pending.**
 - Custom values survive restart. **Implemented via persistent preferences/import sanitization.**
-- Appearance changes do not materially regress panel-open latency or scrolling. **Hot-path contrast reads were reduced and section cards use a RecyclerView decoration rather than nested lists; device validation pending.**
+- Appearance changes do not materially regress panel-open latency or scrolling. **Hot-path contrast reads were reduced and section cards use a RecyclerView decoration rather than nested lists; exact-head code review/CI are clean, device validation pending.**
 
 ## Phase P5 — Backup / portability
 

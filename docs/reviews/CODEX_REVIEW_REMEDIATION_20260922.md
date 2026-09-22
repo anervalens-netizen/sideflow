@@ -346,6 +346,21 @@ Codex reviewed `dac9bbb2` and produced one additional P2. It is remediated local
 - `git diff --check`: **PASS**.
 - PR #7 remains draft/unmerged; fresh exact-head Codex + repository AI review and CI are mandatory.
 
+## PR #7 — P4 code-review closure
+
+P4 implementation is **code/review complete** on reviewed code head `9c887343b15f369ed188f355841cc3616ff4c2d2`; physical OnePlus/OxygenOS validation remains intentionally deferred.
+
+Evidence on the exact code head:
+
+- local `testDebugUnitTest assembleDebug`: **PASS**, **63/63** unit tests;
+- `git diff --check`: **PASS**;
+- GitHub CI `35776141847`: **SUCCESS**;
+- Codex Connector review: **Completed / no major issues** on `9c887343`;
+- repository AI PR review: **No actionable P0/P1/P2 defects** on `9c887343`;
+- unresolved PR #7 review threads: **0**.
+
+PR #7 remains draft/unmerged per owner instruction. This closure covers code review only; device visual/runtime validation is still pending and belongs to the deferred Android/OxygenOS validation gate.
+
 ## Mandatory remediation order
 
 1. **Privacy / misleading UI first:** PR #2 donation UI, backup filename ignore, PR #5 Auto Backup and export warning.
