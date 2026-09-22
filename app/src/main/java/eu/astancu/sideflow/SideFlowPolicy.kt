@@ -85,6 +85,13 @@ object SideFlowPolicy {
     ): Boolean =
         !isSectionHeader && hasShelfItemId && sectionId?.startsWith("folder:") != true
 
+    fun shouldUseDarkContentForSurface(
+        surfaceIsLight: Boolean,
+        effectiveAlpha: Int,
+        hideBackground: Boolean
+    ): Boolean =
+        !hideBackground && effectiveAlpha.coerceIn(0, 255) >= 192 && surfaceIsLight
+
     fun applyOpacityToArgb(argb: Int, opacityPercent: Int): Int {
         val baseAlpha = (argb ushr 24) and 0xFF
         val opacity = sanitizePanelOpacity(opacityPercent)

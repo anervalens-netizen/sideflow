@@ -50,6 +50,7 @@ class AppPickerPanelView @JvmOverloads constructor(
         private set
     
     private var currentType = AppInfo.Type.APP
+    private var appliedPickerLayoutTheme: String = panelPrefs.uiTheme
     private lateinit var btnTypeApps: TextView
     private lateinit var btnTypeActivities: TextView
     
@@ -281,7 +282,35 @@ class AppPickerPanelView @JvmOverloads constructor(
         rvPickerGrid.layoutParams = lp
     }
 
+    private fun resolvedPickerAccentColor(lightPanel: Boolean): Int {
+        return if (
+            panelPrefs.appearancePreset == AppearancePresetKey.MATERIAL_YOU ||
+            panelPrefs.useCustomAccent
+        ) {
+            panelPrefs.resolvedPanelAccentColor()
+        } else {
+            if (lightPanel) Color.parseColor("#4F46E5") else Color.parseColor("#4A9EFF")
+        }
+    }
+
+    private fun ensurePickerLayoutMatchesTheme() {
+        val theme = panelPrefs.uiTheme
+        if (theme == appliedPickerLayoutTheme) return
+
+        appliedPickerLayoutTheme = theme
+        rvPickerGrid.adapter = null
+        rvPickerGrid.recycledViewPool.clear()
+        rvPickerGrid.layoutManager = if (theme == PanelPreferences.THEME_RICH) {
+            LinearLayoutManager(context)
+        } else {
+            GridLayoutManager(context, 2)
+        }
+        rvPickerGrid.adapter = adapter
+        updatePickerHeight()
+    }
+
     fun applyTheme() {
+        ensurePickerLayoutMatchesTheme()
         val theme = panelPrefs.uiTheme
         val density = context.resources.displayMetrics.density
         
@@ -325,8 +354,9 @@ class AppPickerPanelView @JvmOverloads constructor(
         val textColor = if (lightPanel) Color.parseColor("#1E293B") else Color.WHITE
         val subTextColor = if (lightPanel) Color.parseColor("#64748B") else Color.parseColor("#B3FFFFFF")
 
+        val pickerAccent = resolvedPickerAccentColor(lightPanel)
         tvHeader.setTextColor(textColor)
-        btnEdit.setTextColor(if (isEditMode) Color.parseColor("#4A9EFF") else subTextColor)
+        btnEdit.setTextColor(if (isEditMode) pickerAccent else subTextColor)
         etSearch.setTextColor(textColor)
         etSearch.setHintTextColor(subTextColor)
 
@@ -360,12 +390,10 @@ class AppPickerPanelView @JvmOverloads constructor(
         tvHeader.text = if (isEditMode) "Manage SideFlow" else "All Apps"
         btnEdit.text = if (isEditMode) "DONE" else "EDIT"
         
-        val accentColor = try {
-            if (panelPrefs.useCustomAccent) Color.parseColor(panelPrefs.accentColor)
-            else Color.parseColor("#4A9EFF")
-        } catch (e: Exception) { Color.parseColor("#4A9EFF") }
-
-        btnEdit.setTextColor(if (isEditMode) accentColor else Color.parseColor("#4A9EFF"))
+        val lightPanel = panelPrefs.panelUsesDarkContent()
+        val accentColor = resolvedPickerAccentColor(lightPanel)
+        val inactiveColor = if (lightPanel) Color.parseColor("#64748B") else Color.parseColor("#B3FFFFFF")
+        btnEdit.setTextColor(if (isEditMode) accentColor else inactiveColor)
         adapter.notifyItemRangeChanged(0, adapter.itemCount, "EDIT_MODE_CHANGE")
     }
 
@@ -383,14 +411,10 @@ class AppPickerPanelView @JvmOverloads constructor(
     }
 
     private fun updateTypeToggleUI() {
-        val accentColor = try {
-            if (panelPrefs.useCustomAccent) Color.parseColor(panelPrefs.accentColor)
-            else Color.parseColor("#4A9EFF")
-        } catch (e: Exception) { Color.parseColor("#4A9EFF") }
-
         val lightPanel = panelPrefs.panelUsesDarkContent()
-        val selectedBg = if (lightPanel) Color.parseColor("#14000000") else Color.parseColor("#1AFFFFFF")
-        val selectedText = if (lightPanel) Color.parseColor("#1E293B") else Color.WHITE
+        val accentColor = resolvedPickerAccentColor(lightPanel)
+        val selectedBg = androidx.core.graphics.ColorUtils.setAlphaComponent(accentColor, if (lightPanel) 28 else 38)
+        val selectedText = accentColor
         val unselectedText = if (lightPanel) Color.parseColor("#7A475569") else Color.parseColor("#80FFFFFF")
 
         if (currentType == AppInfo.Type.APP) {
@@ -579,15 +603,7 @@ class AppPickerPanelView @JvmOverloads constructor(
         }
 
         fun updateAccentColor() {
-            accentColor = try {
-                if (panelPrefs.useCustomAccent) {
-                    Color.parseColor(panelPrefs.accentColor)
-                } else {
-                    if (isLightMode) Color.parseColor("#4F46E5") else Color.parseColor("#4DFFFFFF")
-                }
-            } catch (e: Exception) {
-                if (isLightMode) Color.parseColor("#4F46E5") else Color.parseColor("#4DFFFFFF")
-            }
+            accentColor = resolvedPickerAccentColor(isLightMode)
             accentColorStateList = android.content.res.ColorStateList.valueOf(accentColor)
         }
 

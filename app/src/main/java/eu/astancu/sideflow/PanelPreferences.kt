@@ -753,9 +753,14 @@ class PanelPreferences(context: Context) {
     }
 
     fun panelUsesDarkContent(): Boolean {
-        if (hideBackground) return false
-        val opaque = androidx.core.graphics.ColorUtils.setAlphaComponent(resolvedPanelBackgroundColor(), 255)
-        return androidx.core.graphics.ColorUtils.calculateLuminance(opaque) >= 0.6
+        val resolved = resolvedPanelBackgroundColor()
+        val opaque = androidx.core.graphics.ColorUtils.setAlphaComponent(resolved, 255)
+        val surfaceIsLight = androidx.core.graphics.ColorUtils.calculateLuminance(opaque) >= 0.6
+        return SideFlowPolicy.shouldUseDarkContentForSurface(
+            surfaceIsLight = surfaceIsLight,
+            effectiveAlpha = android.graphics.Color.alpha(resolved),
+            hideBackground = hideBackground
+        )
     }
 
     var panelCornerRadius: Int

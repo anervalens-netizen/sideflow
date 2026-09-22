@@ -100,6 +100,15 @@ class SideFlowPolicyTest {
     }
 
     @Test
+    fun translucentLightSurfaceUsesLightContentForUnknownBackdrop() {
+        assertTrue(SideFlowPolicy.shouldUseDarkContentForSurface(true, 255, false))
+        assertTrue(SideFlowPolicy.shouldUseDarkContentForSurface(true, 192, false))
+        assertFalse(SideFlowPolicy.shouldUseDarkContentForSurface(true, 191, false))
+        assertFalse(SideFlowPolicy.shouldUseDarkContentForSurface(false, 255, false))
+        assertFalse(SideFlowPolicy.shouldUseDarkContentForSurface(true, 255, true))
+    }
+
+    @Test
     fun panelOpacityScalesExistingBackgroundAlpha() {
         assertEquals(0x80112233.toInt(), SideFlowPolicy.applyOpacityToArgb(0xFF112233.toInt(), 50))
         assertEquals(0x40112233.toInt(), SideFlowPolicy.applyOpacityToArgb(0x80112233.toInt(), 50))

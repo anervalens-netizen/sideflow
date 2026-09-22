@@ -160,6 +160,23 @@ Codex reviewed 9c36fad and published five additional P2 findings. All five are r
 - git diff --check: **PASS**.
 - P4 remains draft/unmerged; another Codex review is required on the resulting exact HEAD.
 
+## PR #6 — fresh R0/P4 review round 4
+
+Codex reviewed 71b84f49 and completed with three additional P2 findings. All three are remediated locally in the next commit; another exact-head review is mandatory.
+
+| ID | Severity | Finding | Current assessment | Remediation evidence |
+| --- | --- | --- | --- | --- |
+| r4071607776 | P2 | Material You resolves a dynamic accent but picker controls still use fixed colors | **RESOLVED (local)** | Picker edit/selection/type-toggle accent resolution now consumes resolvedPanelAccentColor() for Material You (and custom accent) instead of fixed hex tints. |
+| r4071607783 | P2 | Light but highly translucent panel chooses dark content despite unknown backdrop | **RESOLVED (local)** | Contrast policy now requires both a light surface and effective alpha >= 192 before choosing dark content; hidden/low-alpha surfaces use light content. Pure policy regression added. |
+| r4071607785 | P2 | Preset changing Rich -> Origin does not rebuild picker layout/holders | **RESOLVED (local)** | Picker tracks the applied layout theme; applyTheme() swaps layout manager, clears recycled holders, reattaches the adapter and recomputes height when the UI theme changes. |
+
+### PR #6 round-4 local validation
+
+- Gradle testDebugUnitTest + assembleDebug: **PASS**.
+- Unit tests: **50/50 PASS**.
+- git diff --check: **PASS**.
+- P4 remains draft/unmerged; another Codex review is required on the resulting exact HEAD.
+
 ## Mandatory remediation order
 
 1. **Privacy / misleading UI first:** PR #2 donation UI, backup filename ignore, PR #5 Auto Backup and export warning.
