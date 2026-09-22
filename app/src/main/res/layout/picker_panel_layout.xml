@@ -43,7 +43,7 @@
                 android:layout_weight="1"
                 android:background="@android:color/transparent"
                 android:gravity="center_vertical"
-                android:hint="Search Smart Edge..."
+                android:hint="Search SideFlow..."
                 android:imeOptions="actionSearch"
                 android:inputType="text"
                 android:maxLines="1"

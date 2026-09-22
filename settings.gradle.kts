@@ -20,5 +20,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "SidePanel"
+rootProject.name = "SideFlow"
 include(":app")
