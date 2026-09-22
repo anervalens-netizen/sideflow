@@ -619,25 +619,27 @@ class SidePanelView @JvmOverloads constructor(
             binding.panelCard.background = null
         } else {
             val theme = panelPrefs.uiTheme
-            
-            // Revert to original dark-centric colors for floating panel
-            val bgColor = when (theme) {
-                PanelPreferences.THEME_ORIGIN -> Color.parseColor("#1F1F1F")
-                PanelPreferences.THEME_HYPEROS -> Color.parseColor("#E6252525")
-                else -> try { Color.parseColor(panelPrefs.panelBackgroundColor) } catch (e: Exception) { Color.parseColor("#E61A1C1E") }
-            }
-            
-            val radius = context.dpToPx(if (theme == PanelPreferences.THEME_HYPEROS) 16 else panelPrefs.panelCornerRadius).toFloat()
+            val preset = panelPrefs.appearancePreset
+            val bgColor = panelPrefs.resolvedPanelBackgroundColor()
+            val radius = context.dpToPx(
+                if (preset == AppearancePresetKey.CUSTOM && theme == PanelPreferences.THEME_HYPEROS) 16
+                else panelPrefs.panelCornerRadius
+            ).toFloat()
             
             val shape = GradientDrawable().apply {
                 setColor(bgColor)
                 cornerRadius = radius
                 
-                if (theme == PanelPreferences.THEME_HYPEROS) {
+                if (preset != AppearancePresetKey.CUSTOM) {
+                    val content = if (panelPrefs.panelUsesDarkContent()) Color.BLACK else Color.WHITE
+                    setStroke(
+                        context.dpToPx(1),
+                        androidx.core.graphics.ColorUtils.setAlphaComponent(content, 48)
+                    )
+                } else if (theme == PanelPreferences.THEME_HYPEROS) {
                     setStroke(context.dpToPx(1), Color.parseColor("#4DFFFFFF"))
                 } else if (theme == PanelPreferences.THEME_RICH) {
-                    val accent = try { Color.parseColor(panelPrefs.accentColor) } catch (e: Exception) { Color.parseColor("#4A9EFF") }
-                    setStroke(context.dpToPx(2), accent)
+                    setStroke(context.dpToPx(2), panelPrefs.resolvedPanelAccentColor())
                 } else if (theme == PanelPreferences.THEME_REALME) {
                     val color1 = Color.parseColor("#333333")
                     val color2 = Color.parseColor("#1A1A1A")
@@ -648,8 +650,8 @@ class SidePanelView @JvmOverloads constructor(
             }
             binding.panelCard.background = shape
             
-            // Force white/light icons and text for dark floating panel
-            val iconColorList = ColorStateList.valueOf(Color.WHITE)
+            val contentColor = if (panelPrefs.panelUsesDarkContent()) Color.BLACK else Color.WHITE
+            val iconColorList = ColorStateList.valueOf(contentColor)
             binding.btnClose.imageTintList = iconColorList
             binding.btnScreenshot.imageTintList = iconColorList
             binding.btnVolumeUp.imageTintList = iconColorList
@@ -658,9 +660,13 @@ class SidePanelView @JvmOverloads constructor(
             binding.btnBrightnessDown.imageTintList = iconColorList
             binding.btnReboot.imageTintList = iconColorList
             binding.btnBack.imageTintList = iconColorList
-            
-            binding.tvRamUsage.setTextColor(Color.WHITE)
-            binding.tvBatTemp.setTextColor(Color.WHITE)
+
+            binding.tvRamUsage.setTextColor(contentColor)
+            binding.tvBatTemp.setTextColor(contentColor)
+            tintTextViews(
+                binding.toolsContainer,
+                androidx.core.graphics.ColorUtils.setAlphaComponent(contentColor, 176)
+            )
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 binding.panelCard.clipToOutline = true
@@ -682,6 +688,15 @@ class SidePanelView @JvmOverloads constructor(
             updateHandler.post(updateRunnable)
         } else {
             updateHandler.removeCallbacks(updateRunnable)
+        }
+    }
+
+    private fun tintTextViews(root: ViewGroup, color: Int) {
+        for (i in 0 until root.childCount) {
+            when (val child = root.getChildAt(i)) {
+                is android.widget.TextView -> child.setTextColor(color)
+                is ViewGroup -> tintTextViews(child, color)
+            }
         }
     }
 

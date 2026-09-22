@@ -176,6 +176,15 @@ class PanelAppsAdapter(
         if (holder is SectionViewHolder) {
             val section = mutableApps.getOrNull(position) ?: return
             holder.title.text = section.appName
+            val sectionContentColor = if (panelPrefs.panelUsesDarkContent()) {
+                android.graphics.Color.parseColor("#CC1A1A1A")
+            } else {
+                android.graphics.Color.parseColor("#CCFFFFFF")
+            }
+            holder.title.setTextColor(sectionContentColor)
+            holder.divider.backgroundTintList = android.content.res.ColorStateList.valueOf(
+                androidx.core.graphics.ColorUtils.setAlphaComponent(sectionContentColor, 64)
+            )
             val visible = section.showSectionTitle && !compactMode
             holder.title.visibility = if (visible) View.VISIBLE else View.GONE
             holder.divider.visibility = if (visible) View.VISIBLE else View.GONE
@@ -208,8 +217,12 @@ class PanelAppsAdapter(
             }
             holder.tvName.textSize = baseTextSize * scale
             
-            // Keep app labels white for the dark floating panel
-            holder.tvName.setTextColor(android.graphics.Color.parseColor("#D9FFFFFF"))
+            val contentColor = if (panelPrefs.panelUsesDarkContent()) {
+                android.graphics.Color.parseColor("#E61A1A1A")
+            } else {
+                android.graphics.Color.parseColor("#D9FFFFFF")
+            }
+            holder.tvName.setTextColor(contentColor)
 
             // Spacing is independent from icon scale and works consistently
             // across all supported column counts.
@@ -242,9 +255,15 @@ class PanelAppsAdapter(
                 }
 
                 holder.ivIcon.setImageResource(iconRes)
-                holder.ivIcon.imageTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.WHITE)
+                val pseudoContent = if (panelPrefs.panelUsesDarkContent()) {
+                    android.graphics.Color.BLACK
+                } else {
+                    android.graphics.Color.WHITE
+                }
+                holder.ivIcon.imageTintList = android.content.res.ColorStateList.valueOf(pseudoContent)
                 holder.ivIcon.background = android.graphics.drawable.GradientDrawable().apply {
-                    setColor(android.graphics.Color.parseColor("#33FFFFFF"))
+                    val chipColor = if (panelPrefs.panelUsesDarkContent()) "#14000000" else "#33FFFFFF"
+                    setColor(android.graphics.Color.parseColor(chipColor))
                     cornerRadius = context.dpToPx(12).toFloat()
                 }
                 holder.ivIcon.setPadding(context.dpToPx(8), context.dpToPx(8), context.dpToPx(8), context.dpToPx(8))
@@ -386,16 +405,16 @@ class PanelAppsAdapter(
                 holder.ivAdd.layoutParams = lp
             }
 
-            // Revert back to original dark-centric tints for the add button
-            val bgTint = android.graphics.Color.parseColor("#4DFFFFFF")
-            val iconTint = android.graphics.Color.WHITE
+            val lightPanel = panelPrefs.panelUsesDarkContent()
+            val bgTint = android.graphics.Color.parseColor(if (lightPanel) "#1F000000" else "#4DFFFFFF")
+            val iconTint = if (lightPanel) android.graphics.Color.BLACK else android.graphics.Color.WHITE
             
             holder.ivAdd.backgroundTintList = android.content.res.ColorStateList.valueOf(bgTint)
             holder.ivAdd.imageTintList = android.content.res.ColorStateList.valueOf(iconTint)
 
             val tvEdit = holder.itemView.findViewById<TextView>(R.id.tvEdit)
             if (tvEdit != null) {
-                tvEdit.setTextColor(android.graphics.Color.WHITE)
+                tvEdit.setTextColor(iconTint)
                 tvEdit.textSize = 11f * scale
             }
 

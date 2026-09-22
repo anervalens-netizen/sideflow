@@ -27,6 +27,31 @@ The v1 panel is intentionally simple:
 
 The intended organization supports a small number of practical sections such as “My Apps”, “Daily”, and “Chats”, without hard-coding any owner-specific apps or links.
 
+## Current execution status — 2026-09-22
+
+- P0 bootstrap: merged.
+- P1 core launcher/grid: merged; physical OnePlus validation remains pending.
+- P2 sectioned shelf: merged.
+- P3 fast shortcuts/share target: merged.
+- P4 appearance: WIP on `feat/sideflow-p4-appearance-presets`; local build/tests pass, not merged.
+- P5 backup/portability: not started as a phase.
+- P6 device/release validation: pending Android Remote Control MCP / physical device access.
+- **Mandatory Codex review remediation gate is OPEN:** all PR #2–#5 Codex Connector findings were reconciled into `docs/reviews/CODEX_REVIEW_REMEDIATION_20260922.md`. 21 findings were inspected; 1 is already resolved and 20 remain actionable as of this checkpoint. P4 must not merge until the gate is cleared.
+
+## Mandatory gate R0 — Codex Connector remediation
+
+Before P4 can merge:
+
+1. Resolve every applicable finding in `docs/reviews/CODEX_REVIEW_REMEDIATION_20260922.md`.
+2. Prioritize P1 privacy/data-loss findings, then P2 correctness.
+3. Add focused regression tests where the behavior is pure/model-driven.
+4. Run `testDebugUnitTest assembleDebug`.
+5. Request a fresh Codex Connector review on the remediation PR.
+6. Reconcile every new actionable finding before merge.
+7. Update GitHub Issue #1 and ContextKeep with evidence.
+
+This gate exists because green CI alone did not catch several valid cross-feature/privacy regressions in P0–P3.
+
 ## Phase P0 — Bootstrap / ownership
 
 ### Work

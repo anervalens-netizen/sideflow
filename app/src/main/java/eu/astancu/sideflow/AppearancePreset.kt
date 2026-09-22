@@ -1,0 +1,66 @@
+package eu.astancu.sideflow
+
+enum class AppearancePresetKey(val storageValue: String, val displayName: String) {
+    CUSTOM("custom", "Custom"),
+    SMOKE_GLASS("smoke_glass", "Smoke Glass"),
+    FROSTED_LIGHT("frosted_light", "Frosted Light"),
+    AMOLED("amoled", "AMOLED"),
+    MATERIAL_YOU("material_you", "Material You");
+
+    companion object {
+        fun fromStorage(value: String?): AppearancePresetKey =
+            entries.firstOrNull { it.storageValue == value } ?: CUSTOM
+    }
+}
+
+data class AppearancePresetSpec(
+    val key: AppearancePresetKey,
+    val backgroundColor: String,
+    val blurEnabled: Boolean,
+    val blurAmount: Int,
+    val cornerRadiusDp: Int,
+    val usesMaterialYouSurface: Boolean = false
+)
+
+object AppearancePresetCatalog {
+    val smokeGlass = AppearancePresetSpec(
+        key = AppearancePresetKey.SMOKE_GLASS,
+        backgroundColor = "#D91C1E22",
+        blurEnabled = true,
+        blurAmount = 28,
+        cornerRadiusDp = 28
+    )
+
+    val frostedLight = AppearancePresetSpec(
+        key = AppearancePresetKey.FROSTED_LIGHT,
+        backgroundColor = "#ECF4F6F8",
+        blurEnabled = true,
+        blurAmount = 32,
+        cornerRadiusDp = 28
+    )
+
+    val amoled = AppearancePresetSpec(
+        key = AppearancePresetKey.AMOLED,
+        backgroundColor = "#FF000000",
+        blurEnabled = false,
+        blurAmount = 0,
+        cornerRadiusDp = 24
+    )
+
+    val materialYou = AppearancePresetSpec(
+        key = AppearancePresetKey.MATERIAL_YOU,
+        backgroundColor = "#E61A1C1E",
+        blurEnabled = true,
+        blurAmount = 20,
+        cornerRadiusDp = 28,
+        usesMaterialYouSurface = true
+    )
+
+    fun spec(key: AppearancePresetKey): AppearancePresetSpec? = when (key) {
+        AppearancePresetKey.CUSTOM -> null
+        AppearancePresetKey.SMOKE_GLASS -> smokeGlass
+        AppearancePresetKey.FROSTED_LIGHT -> frostedLight
+        AppearancePresetKey.AMOLED -> amoled
+        AppearancePresetKey.MATERIAL_YOU -> materialYou
+    }
+}

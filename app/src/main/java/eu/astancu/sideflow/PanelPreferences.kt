@@ -11,8 +11,9 @@ import androidx.core.content.edit
  */
 class PanelPreferences(context: Context) {
 
+    private val appContext = context.applicationContext
     private val prefs: SharedPreferences =
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     companion object {
         private const val PREFS_NAME = "side_panel_prefs"
@@ -32,6 +33,7 @@ class PanelPreferences(context: Context) {
         private const val KEY_PANEL_WIDTH = "panel_width_dp"
         private const val KEY_ITEM_GAP = "item_gap_dp"
         private const val KEY_UI_THEME = "ui_theme"
+        private const val KEY_APPEARANCE_PRESET = "appearance_preset"
 
         private const val KEY_PANEL_RADIUS = "panel_radius"
         private const val KEY_PANEL_BG_COLOR = "panel_bg_color"
@@ -214,6 +216,7 @@ class PanelPreferences(context: Context) {
             KEY_ACCENT_COLOR to accentColor,
             KEY_PANEL_BG_COLOR to panelBackgroundColor,
             KEY_UI_THEME to uiTheme,
+            KEY_APPEARANCE_PRESET to appearancePreset.storageValue,
             KEY_ICON_SHAPE to iconShape,
             KEY_PILL_COLOR to pillColor,
             KEY_ICON_PACK to selectedIconPack,
@@ -305,6 +308,7 @@ class PanelPreferences(context: Context) {
                 if (obj.has(KEY_ACCENT_COLOR)) putString(KEY_ACCENT_COLOR, obj.getString(KEY_ACCENT_COLOR))
                 if (obj.has(KEY_PANEL_BG_COLOR)) putString(KEY_PANEL_BG_COLOR, obj.getString(KEY_PANEL_BG_COLOR))
                 if (obj.has(KEY_UI_THEME)) putString(KEY_UI_THEME, obj.getString(KEY_UI_THEME))
+                if (obj.has(KEY_APPEARANCE_PRESET)) putString(KEY_APPEARANCE_PRESET, AppearancePresetKey.fromStorage(obj.getString(KEY_APPEARANCE_PRESET)).storageValue)
                 if (obj.has(KEY_ICON_SHAPE)) putString(KEY_ICON_SHAPE, obj.getString(KEY_ICON_SHAPE))
                 if (obj.has(KEY_PILL_COLOR)) putString(KEY_PILL_COLOR, obj.getString(KEY_PILL_COLOR))
                 if (obj.has(KEY_ICON_PACK)) putString(KEY_ICON_PACK, obj.getString(KEY_ICON_PACK))
@@ -385,6 +389,7 @@ class PanelPreferences(context: Context) {
             putInt(KEY_PANEL_WIDTH, DEFAULT_PANEL_WIDTH)
             putInt(KEY_ITEM_GAP, DEFAULT_ITEM_GAP)
             putString(KEY_UI_THEME, DEFAULT_THEME)
+            putString(KEY_APPEARANCE_PRESET, AppearancePresetKey.CUSTOM.storageValue)
             putInt(KEY_PANEL_RADIUS, DEFAULT_PANEL_RADIUS)
             putString(KEY_PANEL_BG_COLOR, DEFAULT_PANEL_BG)
             putBoolean(KEY_HIDE_BG, DEFAULT_HIDE_BG)
@@ -639,6 +644,68 @@ class PanelPreferences(context: Context) {
     var uiTheme: String
         get() = prefs.getString(KEY_UI_THEME, DEFAULT_THEME) ?: DEFAULT_THEME
         set(value) = prefs.edit { putString(KEY_UI_THEME, value) }
+
+    var appearancePreset: AppearancePresetKey
+        get() = AppearancePresetKey.fromStorage(prefs.getString(KEY_APPEARANCE_PRESET, null))
+        set(value) = prefs.edit { putString(KEY_APPEARANCE_PRESET, value.storageValue) }
+
+    fun applyAppearancePreset(preset: AppearancePresetKey) {
+        val spec = AppearancePresetCatalog.spec(preset)
+        if (spec == null) {
+            appearancePreset = AppearancePresetKey.CUSTOM
+            return
+        }
+
+        prefs.edit {
+            putString(KEY_APPEARANCE_PRESET, preset.storageValue)
+            putString(KEY_UI_THEME, THEME_ORIGIN)
+            putString(KEY_PANEL_BG_COLOR, spec.backgroundColor)
+            putBoolean(KEY_BLUR_ENABLED, spec.blurEnabled)
+            putInt(KEY_BLUR_AMOUNT, spec.blurAmount)
+            putInt(KEY_PANEL_RADIUS, spec.cornerRadiusDp)
+            putBoolean(KEY_HIDE_BG, false)
+        }
+    }
+
+    fun resolvedPanelBackgroundColor(): Int {
+        if (appearancePreset == AppearancePresetKey.MATERIAL_YOU) {
+            val dynamic = com.google.android.material.color.MaterialColors.getColor(
+                appContext,
+                com.google.android.material.R.attr.colorSurfaceContainer,
+                android.graphics.Color.parseColor(AppearancePresetCatalog.materialYou.backgroundColor)
+            )
+            return androidx.core.graphics.ColorUtils.setAlphaComponent(dynamic, 232)
+        }
+
+        if (appearancePreset != AppearancePresetKey.CUSTOM) {
+            return runCatching { android.graphics.Color.parseColor(panelBackgroundColor) }
+                .getOrDefault(android.graphics.Color.parseColor(DEFAULT_PANEL_BG))
+        }
+
+        return when (uiTheme) {
+            THEME_ORIGIN -> android.graphics.Color.parseColor("#1F1F1F")
+            THEME_HYPEROS -> android.graphics.Color.parseColor("#E6252525")
+            else -> runCatching { android.graphics.Color.parseColor(panelBackgroundColor) }
+                .getOrDefault(android.graphics.Color.parseColor(DEFAULT_PANEL_BG))
+        }
+    }
+
+    fun resolvedPanelAccentColor(): Int {
+        if (!useCustomAccent && appearancePreset == AppearancePresetKey.MATERIAL_YOU) {
+            return com.google.android.material.color.MaterialColors.getColor(
+                appContext,
+                com.google.android.material.R.attr.colorPrimary,
+                android.graphics.Color.parseColor(DEFAULT_ACCENT_COLOR)
+            )
+        }
+        return runCatching { android.graphics.Color.parseColor(accentColor) }
+            .getOrDefault(android.graphics.Color.parseColor(DEFAULT_ACCENT_COLOR))
+    }
+
+    fun panelUsesDarkContent(): Boolean {
+        val opaque = androidx.core.graphics.ColorUtils.setAlphaComponent(resolvedPanelBackgroundColor(), 255)
+        return androidx.core.graphics.ColorUtils.calculateLuminance(opaque) >= 0.6
+    }
 
     var panelCornerRadius: Int
         get() = prefs.getInt(KEY_PANEL_RADIUS, DEFAULT_PANEL_RADIUS)

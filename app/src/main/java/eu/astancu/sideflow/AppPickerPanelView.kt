@@ -289,21 +289,27 @@ class AppPickerPanelView @JvmOverloads constructor(
             shape = android.graphics.drawable.GradientDrawable.RECTANGLE
         }
         
-        val themeBgColor = when (theme) {
-            PanelPreferences.THEME_ORIGIN -> Color.parseColor("#1F1F1F") 
-            PanelPreferences.THEME_HYPEROS -> Color.parseColor("#E6252525")
-            else -> try { Color.parseColor(panelPrefs.panelBackgroundColor) } catch (e: Exception) { Color.parseColor("#E61A1C1E") }
-        }
+        val preset = panelPrefs.appearancePreset
+        val themeBgColor = panelPrefs.resolvedPanelBackgroundColor()
         drawable.setColor(themeBgColor)
-        
-        val finalRadius = if (theme == PanelPreferences.THEME_HYPEROS) 16f else panelPrefs.panelCornerRadius.toFloat()
+
+        val finalRadius = if (preset == AppearancePresetKey.CUSTOM && theme == PanelPreferences.THEME_HYPEROS) {
+            16f
+        } else {
+            panelPrefs.panelCornerRadius.toFloat()
+        }
         drawable.cornerRadius = finalRadius * density
 
-        if (theme == PanelPreferences.THEME_HYPEROS) {
+        if (preset != AppearancePresetKey.CUSTOM) {
+            val content = if (panelPrefs.panelUsesDarkContent()) Color.BLACK else Color.WHITE
+            drawable.setStroke(
+                (1 * density).toInt(),
+                androidx.core.graphics.ColorUtils.setAlphaComponent(content, 48)
+            )
+        } else if (theme == PanelPreferences.THEME_HYPEROS) {
             drawable.setStroke((1.5 * density).toInt(), Color.parseColor("#4DFFFFFF"))
         } else if (theme == PanelPreferences.THEME_RICH) {
-            val accent = try { Color.parseColor(panelPrefs.accentColor) } catch (e: Exception) { Color.parseColor("#4A9EFF") }
-            drawable.setStroke((2 * density).toInt(), accent)
+            drawable.setStroke((2 * density).toInt(), panelPrefs.resolvedPanelAccentColor())
         } else if (theme == PanelPreferences.THEME_REALME) {
             val color1 = Color.parseColor("#333333")
             val color2 = Color.parseColor("#1A1A1A")
@@ -315,8 +321,9 @@ class AppPickerPanelView @JvmOverloads constructor(
         pickerPanelCard.background = drawable
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) pickerPanelCard.clipToOutline = true
 
-        val textColor = Color.WHITE
-        val subTextColor = Color.parseColor("#B3FFFFFF")
+        val lightPanel = panelPrefs.panelUsesDarkContent()
+        val textColor = if (lightPanel) Color.parseColor("#1E293B") else Color.WHITE
+        val subTextColor = if (lightPanel) Color.parseColor("#64748B") else Color.parseColor("#B3FFFFFF")
 
         tvHeader.setTextColor(textColor)
         btnEdit.setTextColor(if (isEditMode) Color.parseColor("#4A9EFF") else subTextColor)
@@ -336,13 +343,15 @@ class AppPickerPanelView @JvmOverloads constructor(
                 val g = (Color.green(baseColor) * 0.8f).toInt()
                 val b = (Color.blue(baseColor) * 0.8f).toInt()
                 setColor(Color.argb(alpha, r, g, b))
-                setStroke((1 * density).toInt(), Color.parseColor("#1AFFFFFF"))
+                val strokeColor = if (lightPanel) Color.parseColor("#1A000000") else Color.parseColor("#1AFFFFFF")
+                setStroke((1 * density).toInt(), strokeColor)
             }
             it.background = sd
         }
         
-        adapter.setIsLightMode(false)
-        notificationAdapter.setIsLightMode(false)
+        adapter.setIsLightMode(lightPanel)
+        notificationAdapter.setIsLightMode(lightPanel)
+        updateTypeToggleUI()
     }
 
     fun setEditMode(enabled: Boolean) {
@@ -379,16 +388,21 @@ class AppPickerPanelView @JvmOverloads constructor(
             else Color.parseColor("#4A9EFF")
         } catch (e: Exception) { Color.parseColor("#4A9EFF") }
 
+        val lightPanel = panelPrefs.panelUsesDarkContent()
+        val selectedBg = if (lightPanel) Color.parseColor("#14000000") else Color.parseColor("#1AFFFFFF")
+        val selectedText = if (lightPanel) Color.parseColor("#1E293B") else Color.WHITE
+        val unselectedText = if (lightPanel) Color.parseColor("#7A475569") else Color.parseColor("#80FFFFFF")
+
         if (currentType == AppInfo.Type.APP) {
-            btnTypeApps.backgroundTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#1AFFFFFF"))
-            btnTypeApps.setTextColor(Color.WHITE)
+            btnTypeApps.backgroundTintList = android.content.res.ColorStateList.valueOf(selectedBg)
+            btnTypeApps.setTextColor(selectedText)
             btnTypeActivities.backgroundTintList = android.content.res.ColorStateList.valueOf(Color.TRANSPARENT)
-            btnTypeActivities.setTextColor(Color.parseColor("#80FFFFFF"))
+            btnTypeActivities.setTextColor(unselectedText)
         } else {
-            btnTypeActivities.backgroundTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#1AFFFFFF"))
-            btnTypeActivities.setTextColor(Color.WHITE)
+            btnTypeActivities.backgroundTintList = android.content.res.ColorStateList.valueOf(selectedBg)
+            btnTypeActivities.setTextColor(selectedText)
             btnTypeApps.backgroundTintList = android.content.res.ColorStateList.valueOf(Color.TRANSPARENT)
-            btnTypeApps.setTextColor(Color.parseColor("#80FFFFFF"))
+            btnTypeApps.setTextColor(unselectedText)
         }
     }
 

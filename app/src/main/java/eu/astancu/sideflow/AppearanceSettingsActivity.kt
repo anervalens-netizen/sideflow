@@ -18,6 +18,7 @@ class AppearanceSettingsActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivitySettingsAppearanceBinding
     private lateinit var panelPrefs: PanelPreferences
+    private var syncingUi = false
 
     override fun attachBaseContext(newBase: android.content.Context) {
         super.attachBaseContext(LocaleHelper.onAttach(newBase))
@@ -40,6 +41,7 @@ class AppearanceSettingsActivity : AppCompatActivity() {
     }
 
     private fun loadCurrentSettings() {
+        syncingUi = true
         binding.sbOpacity.value = panelPrefs.panelOpacity.toFloat()
         binding.tvOpacityValue.text = "${panelPrefs.panelOpacity}%"
 
@@ -94,13 +96,16 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         
         binding.tvCurrentIconPack.text = panelPrefs.iconPackLabel
 
-        binding.btnPickAccent.backgroundTintList = android.content.res.ColorStateList.valueOf(Color.parseColor(panelPrefs.accentColor))
-        binding.btnPickBg.backgroundTintList = android.content.res.ColorStateList.valueOf(Color.parseColor(panelPrefs.panelBackgroundColor))
+        binding.btnPickAccent.backgroundTintList = android.content.res.ColorStateList.valueOf(panelPrefs.resolvedPanelAccentColor())
+        binding.btnPickBg.backgroundTintList = android.content.res.ColorStateList.valueOf(panelPrefs.resolvedPanelBackgroundColor())
 
         binding.tvHomeButtonStyleValue.text = when (panelPrefs.homeButtonStyle) {
             PanelPreferences.STYLE_POWER -> "Modern Power Icon"
             else -> "Classic Logo"
         }
+
+        binding.tvPresetValue.text = panelPrefs.appearancePreset.displayName
+        syncingUi = false
     }
 
     private fun setupListeners() {
@@ -110,7 +115,8 @@ class AppearanceSettingsActivity : AppCompatActivity() {
             applyOnly()
         }
 
-        binding.sbPanelRadius.addOnChangeListener { _, value, _ ->
+        binding.sbPanelRadius.addOnChangeListener { _, value, fromUser ->
+            if (fromUser) markCustomPreset()
             panelPrefs.panelCornerRadius = value.toInt()
             binding.tvRadiusValue.text = "${value.toInt()}dp"
             applyOnly()
@@ -223,6 +229,24 @@ class AppearanceSettingsActivity : AppCompatActivity() {
                 .show()
         }
 
+        binding.featurePreset.setOnClickListener {
+            val options = AppearancePresetKey.entries.map { it.displayName }.toTypedArray()
+            val values = AppearancePresetKey.entries.toTypedArray()
+            val selectedIndex = values.indexOf(panelPrefs.appearancePreset).coerceAtLeast(0)
+
+            com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                .setTitle("SideFlow preset")
+                .setSingleChoiceItems(options, selectedIndex) { dialog, which ->
+                    val preset = values[which]
+                    panelPrefs.applyAppearancePreset(preset)
+                    loadCurrentSettings()
+                    applyOnly()
+                    dialog.dismiss()
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
+        }
+
         binding.layoutUIStyle.setOnClickListener {
             val options = arrayOf("OriginOS (Rounded)", "HyperOS (Glass)", "Realme UI", "Rich UI (Glow)")
             val values = arrayOf(
@@ -237,7 +261,9 @@ class AppearanceSettingsActivity : AppCompatActivity() {
             com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
                 .setTitle("Panel UI Style")
                 .setSingleChoiceItems(options, selectedIndex) { dialog, which ->
+                    panelPrefs.appearancePreset = AppearancePresetKey.CUSTOM
                     panelPrefs.uiTheme = values[which]
+                    binding.tvPresetValue.text = AppearancePresetKey.CUSTOM.displayName
                     binding.tvUIStyleValue.text = options[which]
                     applyOnly()
                     dialog.dismiss()
@@ -271,17 +297,20 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         }
 
         binding.featureBlur.setOnCheckedChangeListener { _, isChecked ->
+            if (!syncingUi) markCustomPreset()
             panelPrefs.blurEnabled = isChecked
             applyOnly()
         }
 
-        binding.sbBlurAmount.addOnChangeListener { _, value, _ ->
+        binding.sbBlurAmount.addOnChangeListener { _, value, fromUser ->
+            if (fromUser) markCustomPreset()
             panelPrefs.blurAmount = value.toInt()
             binding.tvBlurAmountValue.text = "${value.toInt()}"
             applyOnly()
         }
 
         binding.featureHideBg.setOnCheckedChangeListener { _, isChecked ->
+            if (!syncingUi) markCustomPreset()
             panelPrefs.hideBackground = isChecked
             applyOnly()
         }
@@ -321,6 +350,7 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         }
 
         binding.btnResetUIColors.setOnClickListener {
+            markCustomPreset()
             panelPrefs.resetUIColors()
             loadCurrentSettings()
             applyOnly()
@@ -346,6 +376,7 @@ class AppearanceSettingsActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
             openColorPicker(Color.parseColor(panelPrefs.panelBackgroundColor)) { newColor ->
+                markCustomPreset()
                 val hex = String.format("#E6%06X", (0xFFFFFF and newColor))
                 panelPrefs.panelBackgroundColor = hex
                 loadCurrentSettings()
@@ -369,6 +400,12 @@ class AppearanceSettingsActivity : AppCompatActivity() {
                 .setNegativeButton("Cancel", null)
                 .show()
         }
+    }
+
+    private fun markCustomPreset() {
+        if (syncingUi || panelPrefs.appearancePreset == AppearancePresetKey.CUSTOM) return
+        panelPrefs.appearancePreset = AppearancePresetKey.CUSTOM
+        binding.tvPresetValue.text = AppearancePresetKey.CUSTOM.displayName
     }
 
     private fun applyOnly() {
