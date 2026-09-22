@@ -196,7 +196,12 @@ class SidePanelView @JvmOverloads constructor(
                     to = (adapter.itemCount - 2).coerceAtLeast(0)
                 } else if (target is PanelAppsAdapter.SectionViewHolder) {
                     // Dropping on a section header means “first item in section”.
-                    to = (to + 1).coerceAtMost(adapter.itemCount - 1)
+                    // Account for the source disappearing before a later header.
+                    to = SideFlowPolicy.sectionHeaderDropInsertionIndex(
+                        fromIndex = from,
+                        headerIndexBeforeRemoval = to,
+                        itemCountBeforeRemoval = adapter.getApps().size
+                    )
                 }
 
                 if (from == androidx.recyclerview.widget.RecyclerView.NO_POSITION || from == to) return false
@@ -450,6 +455,7 @@ class SidePanelView @JvmOverloads constructor(
         val lp = binding.panelCard.layoutParams
         lp.width = context.dpToPx(resolvedWidthDp)
         binding.panelCard.layoutParams = lp
+        adapter.setAvailablePanelWidthDp(resolvedWidthDp)
 
         // Calculate maximum allowed height for the RecyclerView to ensure the panel fits on screen
         

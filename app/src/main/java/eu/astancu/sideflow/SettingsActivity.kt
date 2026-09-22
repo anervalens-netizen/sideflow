@@ -156,9 +156,6 @@ class SettingsActivity : AppCompatActivity() {
         binding.btnPickBg.isEnabled = true
         binding.btnSelectIconPack.isEnabled = true
 
-        binding.tvSupportStatus.text = "Support Development"
-        binding.btnGoPremium.text = "Donate"
-        binding.btnGoPremium.visibility = View.VISIBLE
     }
 
     private fun setupListeners() {
@@ -328,11 +325,6 @@ class SettingsActivity : AppCompatActivity() {
             binding.sbHandleWidth.value = default.toFloat()
             binding.tvWidthValue.text = "${default}dp"
             applyOnly()
-        }
-
-        binding.btnGoPremium.setOnClickListener {
-            val intent = Intent(this, SupportActivity::class.java)
-            startActivity(intent)
         }
 
         binding.sbHandleOffset.addOnChangeListener { _, value, fromUser ->

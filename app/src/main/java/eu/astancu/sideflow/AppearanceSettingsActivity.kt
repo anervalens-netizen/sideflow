@@ -324,13 +324,13 @@ class AppearanceSettingsActivity : AppCompatActivity() {
             var newlySelectedIndex = currentSelectedIndex
 
             com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-                .setTitle("Panel Columns")
+                .setTitle("All Section Columns")
                 .setSingleChoiceItems(options, currentSelectedIndex) { _, which ->
                     newlySelectedIndex = which
                 }
                 .setPositiveButton("Apply") { _, _ ->
                     val columns = newlySelectedIndex + SideFlowPolicy.MIN_COLUMNS
-                    panelPrefs.panelColumns = columns
+                    panelPrefs.setAllSectionColumns(columns)
                     binding.tvColumnsValue.text = options[newlySelectedIndex]
                     applyOnly()
                 }

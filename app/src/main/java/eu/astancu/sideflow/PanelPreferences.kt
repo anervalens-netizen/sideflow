@@ -841,13 +841,24 @@ class PanelPreferences(context: Context) {
     val appearanceKey: String
         get() = "shape:$iconShape|pack:$selectedIconPack|theme:$uiTheme"
 
+    fun hasShelfConfiguration(): Boolean =
+        prefs.contains(KEY_SHELF_CONFIG) || prefs.contains(KEY_PANEL_APPS)
+
     fun getShelfConfig(): ShelfConfig {
         val stored = prefs.getString(KEY_SHELF_CONFIG, null)
         val decoded = stored?.let(ShelfConfigJson::decode)
         if (decoded != null) return decoded
 
-        val migrated = ShelfConfigOps.fromLegacyIdentifiers(readLegacyPanelApps())
-        setShelfConfig(migrated)
+        val hasLegacyConfig = prefs.contains(KEY_PANEL_APPS)
+        val migrated = ShelfConfigOps.fromLegacyIdentifiers(
+            identifiers = readLegacyPanelApps(),
+            columns = panelColumns
+        )
+        // Reading preferences on a fresh install must not mark an empty shelf
+        // as user-configured before the service gets a chance to seed defaults.
+        if (hasLegacyConfig) {
+            setShelfConfig(migrated)
+        }
         return migrated
     }
 
@@ -876,7 +887,23 @@ class PanelPreferences(context: Context) {
         ShelfConfigOps.allItems(getShelfConfig()).map { it.reference }
 
     fun setPanelApps(identifiers: List<String>) {
-        setShelfConfig(ShelfConfigOps.fromLegacyIdentifiers(identifiers))
+        setShelfConfig(
+            ShelfConfigOps.fromLegacyIdentifiers(
+                identifiers = identifiers,
+                columns = panelColumns
+            )
+        )
+    }
+
+    fun setAllSectionColumns(columns: Int) {
+        val sanitized = SideFlowPolicy.sanitizeColumns(columns)
+        panelColumns = sanitized
+        setShelfConfig(
+            ShelfConfigOps.setAllSectionColumns(
+                config = getShelfConfig(),
+                columns = sanitized
+            )
+        )
     }
 
     fun addApp(identifier: String) {

@@ -188,7 +188,9 @@ class FloatingPanelService : Service() {
         registerReceiver(packageReceiver, pkgFilter)
 
         serviceScope.launch {
-            if (panelPrefs.getPanelApps().isEmpty()) {
+            // Seed only a genuinely new install. An existing empty shelf is a
+            // deliberate user configuration and must stay empty.
+            if (SideFlowPolicy.shouldSeedDefaultShelf(panelPrefs.hasShelfConfiguration())) {
                 val topApps = AppRepository(this@FloatingPanelService).getTop5Apps()
                 panelPrefs.setPanelApps(topApps)
                 refreshApps()
@@ -249,10 +251,6 @@ class FloatingPanelService : Service() {
             }
             ACTION_REFRESH -> {
                 serviceScope.launch {
-                    if (panelPrefs.getPanelApps().isEmpty()) {
-                        val topApps = AppRepository(this@FloatingPanelService).getTop5Apps()
-                        panelPrefs.setPanelApps(topApps)
-                    }
                     val isLandscape = resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
                     val shouldShowHandle = if (isLandscape && !panelPrefs.showInLandscape) false
                                           else if (panelPrefs.onlyOnHome && !isCurrentPackageLauncher()) false
@@ -809,7 +807,8 @@ class FloatingPanelService : Service() {
                             val mode = when {
                                 dropY < screenHeight * 0.30 -> SplitScreenHelper.MODE_TOP
                                 dropY > screenHeight * 0.70 -> SplitScreenHelper.MODE_BOTTOM
-                                panelPrefs.freeformEnabled -> SplitScreenHelper.MODE_FREEFORM
+                                panelPrefs.freeformEnabled && this@FloatingPanelService.isFreeformEnabled() ->
+                                    SplitScreenHelper.MODE_FREEFORM
                                 else -> SplitScreenHelper.MODE_FULLSCREEN
                             }
                             

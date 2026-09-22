@@ -23,6 +23,28 @@ class ShortcutPolicyTest {
     }
 
     @Test
+    fun sharedWikipediaUrlKeepsBalancedClosingParenthesis() {
+        assertEquals(
+            "https://en.wikipedia.org/wiki/Function_(mathematics)",
+            ShortcutPolicy.extractTarget(
+                "Read https://en.wikipedia.org/wiki/Function_(mathematics)."
+            )
+        )
+    }
+
+    @Test
+    fun manualUriNormalizationPreservesValidTrailingCharacters() {
+        assertEquals(
+            "https://example.com/path_(x)",
+            ShortcutPolicy.normalizeTarget("https://example.com/path_(x)")
+        )
+        assertEquals(
+            "https://example.com/value;",
+            ShortcutPolicy.normalizeTarget("https://example.com/value;")
+        )
+    }
+
+    @Test
     fun supportsIntentAndCustomSchemeDeepLinks() {
         assertEquals(
             ShelfItemType.DEEP_LINK,

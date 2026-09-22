@@ -2,21 +2,23 @@ package eu.astancu.sideflow
 
 object ShortcutPolicy {
     private val uriPattern = Regex("""(?i)(?:https?://|www\.|intent:|[a-z][a-z0-9+.-]*:)[^\s<>"']+""")
-    private val trailingPunctuation = charArrayOf('.', ',', ';', ':', ')', ']', '}', '!', '?')
+    private val sharedTextPunctuation = charArrayOf('.', ',', '!')
 
     fun extractTarget(sharedText: String?): String? {
         val text = sharedText?.trim().orEmpty()
         if (text.isBlank()) return null
 
         val match = uriPattern.find(text)?.value ?: return normalizeTarget(text)
-        return normalizeTarget(match)
+        return normalizeTarget(trimSharedTextTarget(match))
     }
 
+    /**
+     * Normalizes explicit user input without deleting syntactically valid URI
+     * characters. Prose punctuation cleanup belongs only to extractTarget().
+     */
     fun normalizeTarget(raw: String?): String? {
         var value = raw?.trim().orEmpty()
         if (value.isBlank()) return null
-
-        value = value.trimEnd(*trailingPunctuation)
 
         if (value.startsWith("www.", ignoreCase = true)) {
             value = "https://$value"
@@ -32,6 +34,24 @@ object ShortcutPolicy {
         } else {
             null
         }
+    }
+
+    private fun trimSharedTextTarget(raw: String): String {
+        var value = raw.trimEnd(*sharedTextPunctuation)
+
+        fun trimUnmatchedClosing(open: Char, close: Char) {
+            while (
+                value.endsWith(close) &&
+                value.count { it == close } > value.count { it == open }
+            ) {
+                value = value.dropLast(1).trimEnd(*sharedTextPunctuation)
+            }
+        }
+
+        trimUnmatchedClosing('(', ')')
+        trimUnmatchedClosing('[', ']')
+        trimUnmatchedClosing('{', '}')
+        return value
     }
 
     fun classify(target: String): ShelfItemType = when {

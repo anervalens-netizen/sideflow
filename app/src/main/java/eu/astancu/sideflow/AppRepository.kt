@@ -329,7 +329,9 @@ class AppRepository(context: Context) {
         )
 
         folder.children.mapNotNull { child ->
-            resolveShelfItem(child, section, persisted = false)
+            // Nested folders must keep their stable shelf IDs so opening a child
+            // folder can resolve it recursively from the canonical shelf model.
+            resolveShelfItem(child, section, persisted = true)
         }
     }
 

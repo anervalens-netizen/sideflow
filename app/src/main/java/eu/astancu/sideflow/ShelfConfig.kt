@@ -46,74 +46,88 @@ object ShelfConfigOps {
     const val DEFAULT_SECTION_ID = "apps"
     const val DEFAULT_SECTION_TITLE = "Apps"
 
-    fun defaultConfig(items: List<ShelfItem> = emptyList()): ShelfConfig =
+    fun defaultConfig(
+        items: List<ShelfItem> = emptyList(),
+        columns: Int = SideFlowPolicy.DEFAULT_COLUMNS
+    ): ShelfConfig =
         ShelfConfig(
             sections = listOf(
                 ShelfSection(
                     id = DEFAULT_SECTION_ID,
                     title = DEFAULT_SECTION_TITLE,
-                    columns = SideFlowPolicy.DEFAULT_COLUMNS,
+                    columns = SideFlowPolicy.sanitizeColumns(columns),
                     showTitle = true,
                     items = items
                 )
             )
         )
 
-    fun fromLegacyIdentifiers(identifiers: List<String>): ShelfConfig {
+    fun fromLegacyIdentifiers(
+        identifiers: List<String>,
+        columns: Int = SideFlowPolicy.DEFAULT_COLUMNS
+    ): ShelfConfig {
         val items = identifiers
             .filter { it.isNotBlank() }
+            .map(::migrateLegacyIdentifier)
             .distinct()
             .map(::legacyItem)
-        return defaultConfig(items)
+        return defaultConfig(items, columns)
+    }
+
+    fun migrateLegacyIdentifier(identifier: String): String {
+        val value = identifier.trim()
+        return when {
+            value.startsWith("smartedge.folder.") ->
+                "sideflow.folder." + value.removePrefix("smartedge.folder.")
+            value.startsWith("smartedge.tool.") ->
+                "sideflow.tool." + value.removePrefix("smartedge.tool.")
+            value.startsWith("smartedge.shortcut.") ->
+                "sideflow.shortcut." + value.removePrefix("smartedge.shortcut.")
+            else -> value
+        }
     }
 
     fun legacyItem(identifier: String): ShelfItem {
-        val type = when {
-            identifier.startsWith("intent:") -> ShelfItemType.DEEP_LINK
-            identifier.startsWith("http://") || identifier.startsWith("https://") -> ShelfItemType.URL
-            identifier.startsWith("sideflow.folder.") -> ShelfItemType.FOLDER
-            identifier.startsWith("sideflow.tool.") ||
-                identifier == "sideflow.shortcut.one_hand" ||
-                identifier == "sideflow.shortcut.reboot" -> ShelfItemType.SYSTEM_ACTION
-            else -> ShelfItemType.APP
-        }
+        val canonicalIdentifier = migrateLegacyIdentifier(identifier)
         return ShelfItem(
-            id = deterministicId("legacy:$identifier"),
-            type = type,
-            reference = identifier
+            id = deterministicId("legacy:" + canonicalIdentifier),
+            type = legacyType(canonicalIdentifier),
+            reference = canonicalIdentifier
         )
+    }
+
+    private fun legacyType(identifier: String): ShelfItemType = when {
+        identifier.startsWith("intent:") -> ShelfItemType.DEEP_LINK
+        identifier.startsWith("http://") || identifier.startsWith("https://") -> ShelfItemType.URL
+        identifier.startsWith("sideflow.folder.") -> ShelfItemType.FOLDER
+        identifier.startsWith("sideflow.tool.") ||
+            identifier == "sideflow.shortcut.one_hand" ||
+            identifier == "sideflow.shortcut.reboot" -> ShelfItemType.SYSTEM_ACTION
+        else -> ShelfItemType.APP
     }
 
     fun normalize(config: ShelfConfig): ShelfConfig {
         val sourceSections = if (config.sections.isEmpty()) defaultConfig().sections else config.sections
         val seenSections = mutableSetOf<String>()
-        val seenItems = mutableSetOf<String>()
+        val seenTopLevelIdentities = mutableSetOf<String>()
+        val usedItemIds = mutableSetOf<String>()
 
         val normalizedSections = sourceSections.mapIndexedNotNull { index, section ->
             val sectionId = section.id.trim().ifBlank {
-                if (index == 0) DEFAULT_SECTION_ID else "section-${index + 1}"
+                if (index == 0) DEFAULT_SECTION_ID else "section-" + (index + 1)
             }
             if (!seenSections.add(sectionId)) return@mapIndexedNotNull null
 
-            val normalizedItems = section.items.mapNotNull { item ->
-                val ref = item.reference.trim()
-                if (ref.isBlank()) return@mapNotNull null
-
-                val identityKey = "${item.type.name}:$ref"
-                if (!seenItems.add(identityKey)) return@mapNotNull null
-
-                item.copy(
-                    id = item.id.trim().ifBlank { deterministicId(identityKey) },
-                    reference = ref,
-                    label = item.label?.trim()?.takeIf { it.isNotEmpty() },
-                    iconPackage = item.iconPackage?.trim()?.takeIf { it.isNotEmpty() },
-                    children = normalizeChildren(item.children)
-                )
-            }
+            val normalizedItems = normalizeItems(
+                items = section.items,
+                path = "section:" + sectionId,
+                usedItemIds = usedItemIds,
+                seenIdentities = seenTopLevelIdentities
+            )
 
             section.copy(
                 id = sectionId,
-                title = section.title.trim().ifBlank { "Section ${index + 1}" },
+                title = section.title.trim().ifBlank { "Section " + (index + 1) },
                 columns = SideFlowPolicy.sanitizeColumns(section.columns),
                 items = normalizedItems
             )
@@ -159,6 +173,16 @@ object ShelfConfigOps {
                     )
                 }
             )
+        )
+    }
+
+    fun setAllSectionColumns(config: ShelfConfig, columns: Int): ShelfConfig {
+        val normalized = normalize(config)
+        val sanitized = SideFlowPolicy.sanitizeColumns(columns)
+        return normalized.copy(
+            sections = normalized.sections.map { section ->
+                section.copy(columns = sanitized)
+            }
         )
     }
 
@@ -318,29 +342,111 @@ object ShelfConfigOps {
     }
 
     fun findItem(config: ShelfConfig, itemId: String): ShelfItem? =
-        normalize(config).sections.asSequence()
-            .flatMap { it.items.asSequence() }
-            .firstOrNull { it.id == itemId }
+        findItemRecursive(
+            normalize(config).sections.flatMap { it.items },
+            itemId
+        )
 
     fun allItems(config: ShelfConfig): List<ShelfItem> =
         normalize(config).sections.flatMap { it.items }
 
-    private fun normalizeChildren(children: List<ShelfItem>): List<ShelfItem> {
-        val seen = mutableSetOf<String>()
-        return children.mapNotNull { child ->
-            val ref = child.reference.trim()
-            if (ref.isBlank()) return@mapNotNull null
-            val identity = "${child.type.name}:$ref"
-            if (!seen.add(identity)) return@mapNotNull null
-            child.copy(
-                id = child.id.trim().ifBlank { deterministicId("child:$identity") },
-                reference = ref,
-                label = child.label?.trim()?.takeIf { it.isNotEmpty() },
-                iconPackage = child.iconPackage?.trim()?.takeIf { it.isNotEmpty() },
-                children = normalizeChildren(child.children)
+    fun allItemsRecursive(config: ShelfConfig): List<ShelfItem> {
+        val result = mutableListOf<ShelfItem>()
+        fun collect(items: List<ShelfItem>) {
+            items.forEach { item ->
+                result += item
+                collect(item.children)
+            }
+        }
+        collect(normalize(config).sections.flatMap { it.items })
+        return result
+    }
+
+    fun containsShortcutTargets(config: ShelfConfig): Boolean =
+        allItemsRecursive(config).any {
+            it.type == ShelfItemType.URL || it.type == ShelfItemType.DEEP_LINK
+        }
+
+    private fun findItemRecursive(items: List<ShelfItem>, itemId: String): ShelfItem? {
+        items.forEach { item ->
+            if (item.id == itemId) return item
+            findItemRecursive(item.children, itemId)?.let { return it }
+        }
+        return null
+    }
+
+    private fun normalizeItems(
+        items: List<ShelfItem>,
+        path: String,
+        usedItemIds: MutableSet<String>,
+        seenIdentities: MutableSet<String>
+    ): List<ShelfItem> =
+        items.mapIndexedNotNull { index, item ->
+            val originalReference = item.reference.trim()
+            if (originalReference.isBlank()) return@mapIndexedNotNull null
+
+            val reference = migrateLegacyIdentifier(originalReference)
+            val type = if (isLegacyPseudoIdentifier(originalReference)) {
+                legacyType(reference)
+            } else {
+                item.type
+            }
+            val identity = type.name + ":" + reference
+            if (!seenIdentities.add(identity)) return@mapIndexedNotNull null
+
+            val id = uniqueItemId(
+                preferredId = item.id,
+                seed = path + ":" + index + ":" + identity,
+                usedItemIds = usedItemIds
+            )
+
+            item.copy(
+                id = id,
+                type = type,
+                reference = reference,
+                label = item.label?.trim()?.takeIf { it.isNotEmpty() },
+                iconPackage = item.iconPackage?.trim()?.takeIf { it.isNotEmpty() },
+                children = normalizeChildren(
+                    children = item.children,
+                    parentPath = path + "/" + id,
+                    usedItemIds = usedItemIds
+                )
             )
         }
+
+    private fun normalizeChildren(
+        children: List<ShelfItem>,
+        parentPath: String,
+        usedItemIds: MutableSet<String>
+    ): List<ShelfItem> =
+        normalizeItems(
+            items = children,
+            path = parentPath,
+            usedItemIds = usedItemIds,
+            seenIdentities = mutableSetOf()
+        )
+
+    private fun uniqueItemId(
+        preferredId: String,
+        seed: String,
+        usedItemIds: MutableSet<String>
+    ): String {
+        val preferred = preferredId.trim()
+        if (preferred.isNotEmpty() && usedItemIds.add(preferred)) return preferred
+
+        var attempt = 0
+        while (true) {
+            val candidateSeed = if (attempt == 0) seed else seed + ":" + attempt
+            val candidate = deterministicId(candidateSeed)
+            if (usedItemIds.add(candidate)) return candidate
+            attempt += 1
+        }
     }
+
+    private fun isLegacyPseudoIdentifier(identifier: String): Boolean =
+        identifier.startsWith("smartedge.folder.") ||
+            identifier.startsWith("smartedge.tool.") ||
+            identifier.startsWith("smartedge.shortcut.")
 
     private fun deterministicId(seed: String): String =
         UUID.nameUUIDFromBytes(seed.toByteArray(StandardCharsets.UTF_8)).toString()

@@ -36,7 +36,7 @@ The intended organization supports a small number of practical sections such as 
 - P4 appearance: WIP on `feat/sideflow-p4-appearance-presets`; local build/tests pass, not merged.
 - P5 backup/portability: not started as a phase.
 - P6 device/release validation: pending Android Remote Control MCP / physical device access.
-- **Mandatory Codex review remediation gate is OPEN:** all PR #2–#5 Codex Connector findings were reconciled into `docs/reviews/CODEX_REVIEW_REMEDIATION_20260922.md`. 21 findings were inspected; 1 is already resolved and 20 remain actionable as of this checkpoint. P4 must not merge until the gate is cleared.
+- **Mandatory Codex review remediation gate remains OPEN for verification:** all 20 previously actionable PR #2–#5 findings now have local fixes and focused regressions on the P4 branch. P4 still must not merge until a fresh Codex Connector review is reconciled and exact-head CI passes.
 
 ## Mandatory gate R0 — Codex Connector remediation
 

@@ -3,6 +3,7 @@ package eu.astancu.sideflow
 import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
+import android.graphics.Rect
 import android.os.Build
 import android.util.Log
 import org.lsposed.hiddenapibypass.HiddenApiBypass
@@ -19,24 +20,34 @@ object SplitScreenHelper {
 
     fun launchApp(context: Context, packageName: String, mode: Int) {
         val pm = context.packageManager
-        val launchIntent = pm.getLaunchIntentForPackage(packageName) ?: return
-        
-        if (mode == WINDOWING_MODE_FULLSCREEN) {
-            launchIntent.addFlags(
-                Intent.FLAG_ACTIVITY_NEW_TASK or
-                    Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
-            )
-            context.startActivity(launchIntent)
+        val launchIntent = pm.getLaunchIntentForPackage(packageName)
+        if (launchIntent == null) {
+            Log.w(TAG, "No launch intent for $packageName")
             return
         }
 
-        // 1. Critical Flags for explicit multi-window actions only.
+        val effectiveMode = if (
+            mode == WINDOWING_MODE_FREEFORM &&
+            !context.isFreeformEnabled()
+        ) {
+            Log.w(TAG, "Freeform unavailable; falling back to fullscreen for $packageName")
+            WINDOWING_MODE_FULLSCREEN
+        } else {
+            mode
+        }
+
+        if (effectiveMode == WINDOWING_MODE_FULLSCREEN) {
+            launchFullscreen(context, launchIntent, packageName)
+            return
+        }
+
+        // Critical flags for explicit multi-window actions only.
         launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         launchIntent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-        
-        val isSplit = mode == WINDOWING_MODE_SPLIT_SCREEN_PRIMARY ||
-                      mode == WINDOWING_MODE_SPLIT_SCREEN_SECONDARY
-        
+
+        val isSplit = effectiveMode == WINDOWING_MODE_SPLIT_SCREEN_PRIMARY ||
+            effectiveMode == WINDOWING_MODE_SPLIT_SCREEN_SECONDARY
+
         if (isSplit) {
             launchIntent.addFlags(Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT)
         }
@@ -44,45 +55,68 @@ object SplitScreenHelper {
         val options = ActivityOptions.makeBasic()
 
         try {
-            // 2. Force Windowing Mode via Hidden API
-            HiddenApiBypass.invoke(
-                ActivityOptions::class.java,
-                options,
-                "setLaunchWindowingMode",
-                mode
-            )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                HiddenApiBypass.invoke(
+                    ActivityOptions::class.java,
+                    options,
+                    "setLaunchWindowingMode",
+                    effectiveMode
+                )
+            }
 
-            // 3. Force via Intent Extras (Commonly respected by many OEMs and AOSP)
-            launchIntent.putExtra("android.intent.extra.WINDOWING_MODE", mode)
-            launchIntent.putExtra("android.intent.extra.LAUNCH_WINDOWING_MODE", mode)
-            
-            // 4. Force specific Screen Bounds
-            // AOSP/Pixel often requires explicit bounds to correctly place the second app
+            launchIntent.putExtra("android.intent.extra.WINDOWING_MODE", effectiveMode)
+            launchIntent.putExtra("android.intent.extra.LAUNCH_WINDOWING_MODE", effectiveMode)
+
             val dm = context.resources.displayMetrics
             val w = dm.widthPixels
             val h = dm.heightPixels
-            
-            val rect = when (mode) {
-                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY   -> android.graphics.Rect(0, 0, w, h / 2)
-                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY -> android.graphics.Rect(0, h / 2, w, h)
-                WINDOWING_MODE_FREEFORM               -> android.graphics.Rect(w / 10, h / 10, w * 9 / 10, h * 9 / 10)
+
+            val rect = when (effectiveMode) {
+                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY -> Rect(0, 0, w, h / 2)
+                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY -> Rect(0, h / 2, w, h)
+                WINDOWING_MODE_FREEFORM -> {
+                    val prefs = PanelPreferences(context)
+                    val bounds = SideFlowPolicy.freeformBounds(
+                        screenWidthPx = w,
+                        screenHeightPx = h,
+                        mode = prefs.freeformWindowMode,
+                        customWidthPercent = prefs.freeformCustomWidth,
+                        customHeightPercent = prefs.freeformCustomHeight
+                    )
+                    Rect(bounds.left, bounds.top, bounds.right, bounds.bottom)
+                }
                 else -> null
             }
-            
+
             if (rect != null) {
                 options.launchBounds = rect
             }
 
-            Log.d(TAG, "Launching $packageName: mode=$mode, bounds=$rect")
+            Log.d(TAG, "Launching $packageName: mode=$effectiveMode, bounds=$rect")
             context.startActivity(launchIntent, options.toBundle())
-            
         } catch (e: Exception) {
-            Log.e(TAG, "Split launch failed: ${e.message}")
-            try {
-                context.startActivity(launchIntent)
-            } catch (e2: Exception) {
-                Log.e(TAG, "Fallback launch also failed: ${e2.message}")
-            }
+            Log.e(TAG, "Windowed launch failed; falling back to fullscreen", e)
+            launchFullscreen(context, launchIntent, packageName)
+        }
+    }
+
+    private fun launchFullscreen(context: Context, sourceIntent: Intent, packageName: String) {
+        val fullscreenIntent = Intent(sourceIntent).apply {
+            removeFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+            removeFlags(Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT)
+            addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
+            )
+            removeExtra("android.intent.extra.WINDOWING_MODE")
+            removeExtra("android.intent.extra.LAUNCH_WINDOWING_MODE")
+        }
+
+        try {
+            context.startActivity(fullscreenIntent)
+        } catch (e: Exception) {
+            // A helper launch must never crash the accessibility/service path.
+            Log.e(TAG, "Fullscreen launch failed for $packageName", e)
         }
     }
 

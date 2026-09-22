@@ -51,7 +51,7 @@
     <string name="blur_desc">May cause lag on budget devices (Android 12+ only)</string>
     <string name="blur_intensity">Blur Intensity</string>
     <string name="invisible_bg">Invisible Background</string>
-    <string name="panel_columns">Panel Columns</string>
+    <string name="panel_columns">All section columns</string>
     <string name="panel_width">Panel width</string>
     <string name="item_gap">Item spacing</string>
     <string name="icon_shape">Icon Shape</string>

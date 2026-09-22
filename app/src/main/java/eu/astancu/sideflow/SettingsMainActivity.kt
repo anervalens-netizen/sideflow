@@ -234,10 +234,6 @@ class SettingsMainActivity : AppCompatActivity() {
             startActivity(Intent(this, ToolsSettingsActivity::class.java))
         }
 
-        binding.btnDonation.setOnClickListener {
-            startActivity(Intent(this, SupportActivity::class.java))
-        }
-
         binding.btnReset.setOnClickListener {
             com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.dialog_reset_title)

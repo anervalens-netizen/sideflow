@@ -195,6 +195,173 @@ class ShelfConfigTest {
     }
 
     @Test
+    fun legacyMigrationMapsSmartEdgePseudoIdsAndKeepsSavedColumns() {
+        val config = ShelfConfigOps.fromLegacyIdentifiers(
+            identifiers = listOf(
+                "smartedge.tool.screenshot",
+                "smartedge.folder.tools",
+                "smartedge.shortcut.reboot"
+            ),
+            columns = 5
+        )
+
+        assertEquals(5, config.sections.single().columns)
+        assertEquals(
+            listOf(
+                "sideflow.tool.screenshot",
+                "sideflow.folder.tools",
+                "sideflow.shortcut.reboot"
+            ),
+            config.sections.single().items.map { it.reference }
+        )
+        assertEquals(
+            listOf(
+                ShelfItemType.SYSTEM_ACTION,
+                ShelfItemType.FOLDER,
+                ShelfItemType.SYSTEM_ACTION
+            ),
+            config.sections.single().items.map { it.type }
+        )
+    }
+
+    @Test
+    fun normalizationMakesItemIdsGloballyUniqueIncludingFolderChildren() {
+        val config = ShelfConfig(
+            sections = listOf(
+                ShelfSection(
+                    id = "one",
+                    title = "One",
+                    items = listOf(
+                        ShelfItem("same", ShelfItemType.APP, "com.one"),
+                        ShelfItem(
+                            "",
+                            ShelfItemType.FOLDER,
+                            "sideflow.folder.nested",
+                            children = listOf(
+                                ShelfItem("same", ShelfItemType.APP, "com.child")
+                            )
+                        )
+                    )
+                ),
+                ShelfSection(
+                    id = "two",
+                    title = "Two",
+                    items = listOf(
+                        ShelfItem("same", ShelfItemType.APP, "com.two")
+                    )
+                )
+            )
+        )
+
+        val normalized = ShelfConfigOps.normalize(config)
+        val ids = ShelfConfigOps.allItemsRecursive(normalized).map { it.id }
+
+        assertTrue(ids.all { it.isNotBlank() })
+        assertEquals(ids.size, ids.toSet().size)
+        assertEquals(normalized, ShelfConfigOps.normalize(normalized))
+    }
+
+    @Test
+    fun nestedFolderItemsCanBeResolvedRecursively() {
+        val child = ShelfItem(
+            id = "child-folder",
+            type = ShelfItemType.FOLDER,
+            reference = "sideflow.folder.child",
+            children = listOf(
+                ShelfItem("nested-app", ShelfItemType.APP, "com.nested")
+            )
+        )
+        val config = ShelfConfig(
+            sections = listOf(
+                ShelfSection(
+                    id = "apps",
+                    title = "Apps",
+                    items = listOf(
+                        ShelfItem(
+                            id = "root-folder",
+                            type = ShelfItemType.FOLDER,
+                            reference = "sideflow.folder.root",
+                            children = listOf(child)
+                        )
+                    )
+                )
+            )
+        )
+
+        assertEquals(
+            "sideflow.folder.child",
+            ShelfConfigOps.findItem(config, "child-folder")?.reference
+        )
+        assertEquals(
+            "com.nested",
+            ShelfConfigOps.findItem(config, "nested-app")?.reference
+        )
+    }
+
+    @Test
+    fun shortcutPrivacyDetectionTraversesNestedFolders() {
+        val config = ShelfConfig(
+            sections = listOf(
+                ShelfSection(
+                    id = "apps",
+                    title = "Apps",
+                    items = listOf(
+                        ShelfItem(
+                            id = "folder",
+                            type = ShelfItemType.FOLDER,
+                            reference = "sideflow.folder.links",
+                            children = listOf(
+                                ShelfItem(
+                                    id = "private-link",
+                                    type = ShelfItemType.URL,
+                                    reference = "https://example.com/private"
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+
+        assertTrue(ShelfConfigOps.containsShortcutTargets(config))
+        assertFalse(
+            ShelfConfigOps.containsShortcutTargets(
+                ShelfConfigOps.defaultConfig(
+                    listOf(ShelfItem("app", ShelfItemType.APP, "com.example"))
+                )
+            )
+        )
+    }
+
+    @Test
+    fun bulkColumnsUpdatesEverySectionWithoutChangingItems() {
+        val config = ShelfConfig(
+            sections = listOf(
+                ShelfSection(
+                    "a",
+                    "A",
+                    columns = 2,
+                    items = listOf(ShelfItem("one", ShelfItemType.APP, "com.one"))
+                ),
+                ShelfSection(
+                    "b",
+                    "B",
+                    columns = 6,
+                    items = listOf(ShelfItem("two", ShelfItemType.APP, "com.two"))
+                )
+            )
+        )
+
+        val updated = ShelfConfigOps.setAllSectionColumns(config, 5)
+
+        assertEquals(listOf(5, 5), updated.sections.map { it.columns })
+        assertEquals(
+            listOf("one", "two"),
+            updated.sections.flatMap { it.items }.map { it.id }
+        )
+    }
+
+    @Test
     fun unsupportedJsonVersionFailsSafely() {
         assertFalse(ShelfConfigJson.decode("{\"version\":99,\"sections\":[]}") != null)
     }

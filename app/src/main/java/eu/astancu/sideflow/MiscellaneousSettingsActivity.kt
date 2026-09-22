@@ -56,7 +56,7 @@ class MiscellaneousSettingsActivity : AppCompatActivity() {
         binding.featureLanguage.setOnClickListener { showLanguagePicker() }
 
         binding.btnExportSettings.setOnClickListener {
-            exportSettingsToDownloads()
+            confirmAndExportSettings()
         }
 
         binding.btnImportSettings.setOnClickListener {
@@ -92,6 +92,24 @@ class MiscellaneousSettingsActivity : AppCompatActivity() {
                 dialog.dismiss()
             }
             .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun confirmAndExportSettings() {
+        if (!ShelfConfigOps.containsShortcutTargets(panelPrefs.getShelfConfig())) {
+            exportSettingsToDownloads()
+            return
+        }
+
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle("Export private shortcut data?")
+            .setMessage(
+                "This backup is plaintext and includes URL/deep-link shortcut targets. " +
+                    "It will be saved in Downloads/SideFlow, where other apps or people " +
+                    "with file access may be able to read it."
+            )
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton("Export") { _, _ -> exportSettingsToDownloads() }
             .show()
     }
 

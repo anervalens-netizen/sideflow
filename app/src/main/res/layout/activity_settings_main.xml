@@ -482,20 +482,6 @@
 
             <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/colorOutlineVariant" android:layout_marginBottom="24dp" />
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnDonation"
-                style="@style/Widget.Material3.Button"
-                android:layout_width="match_parent"
-                android:layout_height="64dp"
-                android:text="Support Development"
-                app:cornerRadius="20dp"
-                app:icon="@drawable/ic_donation"
-                app:iconTint="?attr/colorOnTertiaryContainer"
-                app:iconGravity="textStart"
-                app:iconSize="24dp"
-                android:backgroundTint="?attr/colorTertiaryContainer"
-                android:textColor="?attr/colorOnTertiaryContainer" />
-
-            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnReset"
                 style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="match_parent"

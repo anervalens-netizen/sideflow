@@ -14,6 +14,10 @@ class ShortcutEditorActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_ITEM_ID = "extra_shelf_item_id"
+        private const val STATE_EDITING_ITEM_ID = "state_editing_item_id"
+        private const val STATE_SECTION_ID = "state_section_id"
+        private const val STATE_ICON_PACKAGE = "state_icon_package"
+        private const val STATE_TITLE_AUTOFILLED = "state_title_autofilled"
     }
 
     private lateinit var binding: ActivityShortcutEditorBinding
@@ -36,11 +40,23 @@ class ShortcutEditorActivity : AppCompatActivity() {
 
         binding.toolbar.setNavigationOnClickListener { finish() }
 
-        editingItemId = intent.getStringExtra(EXTRA_ITEM_ID)
+        editingItemId = if (savedInstanceState?.containsKey(STATE_EDITING_ITEM_ID) == true) {
+            savedInstanceState.getString(STATE_EDITING_ITEM_ID)
+        } else {
+            intent.getStringExtra(EXTRA_ITEM_ID)
+        }
         val existing = editingItemId?.let(prefs::getShelfItem)
-        selectedSectionId = findSectionId(editingItemId)
-            ?: prefs.getShelfConfig().sections.firstOrNull()?.id
-        selectedIconPackage = existing?.iconPackage
+        selectedSectionId = if (savedInstanceState?.containsKey(STATE_SECTION_ID) == true) {
+            savedInstanceState.getString(STATE_SECTION_ID)
+        } else {
+            findSectionId(editingItemId)
+                ?: prefs.getShelfConfig().sections.firstOrNull()?.id
+        }
+        selectedIconPackage = if (savedInstanceState?.containsKey(STATE_ICON_PACKAGE) == true) {
+            savedInstanceState.getString(STATE_ICON_PACKAGE)
+        } else {
+            existing?.iconPackage
+        }
 
         val sharedTarget = if (intent.action == Intent.ACTION_SEND && intent.type == "text/plain") {
             ShortcutPolicy.extractTarget(intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString())
@@ -59,7 +75,11 @@ class ShortcutEditorActivity : AppCompatActivity() {
             ?: ""
 
         binding.etTitle.setText(initialTitle)
-        titleWasAutofilled = existing == null && initialTitle.isNotBlank() && sharedTitle.isNullOrBlank()
+        titleWasAutofilled = if (savedInstanceState?.containsKey(STATE_TITLE_AUTOFILLED) == true) {
+            savedInstanceState.getBoolean(STATE_TITLE_AUTOFILLED)
+        } else {
+            existing == null && initialTitle.isNotBlank() && sharedTitle.isNullOrBlank()
+        }
 
         binding.toolbar.title = if (existing == null) "Add shortcut" else "Edit shortcut"
         binding.btnSave.text = if (existing == null) "Save shortcut" else "Update shortcut"
@@ -97,6 +117,14 @@ class ShortcutEditorActivity : AppCompatActivity() {
         binding.btnIcon.setOnClickListener { chooseIconSource() }
         binding.btnSave.setOnClickListener { save() }
         binding.btnDelete.setOnClickListener { deleteCurrentShortcut() }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putString(STATE_EDITING_ITEM_ID, editingItemId)
+        outState.putString(STATE_SECTION_ID, selectedSectionId)
+        outState.putString(STATE_ICON_PACKAGE, selectedIconPackage)
+        outState.putBoolean(STATE_TITLE_AUTOFILLED, titleWasAutofilled)
+        super.onSaveInstanceState(outState)
     }
 
     private fun findSectionId(itemId: String?): String? {

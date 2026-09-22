@@ -31,6 +31,82 @@ class SideFlowPolicyTest {
     }
 
     @Test
+    fun panelWidthIsQuantizedToSliderStep() {
+        assertEquals(180, SideFlowPolicy.sanitizePanelWidthDp(184))
+        assertEquals(190, SideFlowPolicy.sanitizePanelWidthDp(185))
+        assertEquals(190, SideFlowPolicy.sanitizePanelWidthDp(191))
+        assertEquals(420, SideFlowPolicy.sanitizePanelWidthDp(419))
+    }
+
+    @Test
+    fun iconsFitInsideNarrowSixColumnCells() {
+        val fitted = SideFlowPolicy.fitIconSizeDp(
+            panelWidthDp = 180,
+            columns = 6,
+            requestedIconDp = 40,
+            itemGapDp = 6
+        )
+        assertEquals(20, fitted)
+        assertEquals(
+            40,
+            SideFlowPolicy.fitIconSizeDp(300, 4, 40, 6)
+        )
+    }
+
+    @Test
+    fun downwardHeaderDropAccountsForSourceRemoval() {
+        assertEquals(
+            2,
+            SideFlowPolicy.sectionHeaderDropInsertionIndex(
+                fromIndex = 1,
+                headerIndexBeforeRemoval = 2,
+                itemCountBeforeRemoval = 4
+            )
+        )
+        assertEquals(
+            1,
+            SideFlowPolicy.sectionHeaderDropInsertionIndex(
+                fromIndex = 3,
+                headerIndexBeforeRemoval = 0,
+                itemCountBeforeRemoval = 4
+            )
+        )
+    }
+
+    @Test
+    fun configuredFreeformBoundsAreSharedAcrossModes() {
+        assertEquals(
+            SideFlowPolicy.WindowBounds(100, 200, 900, 1800),
+            SideFlowPolicy.freeformBounds(1000, 2000, "standard", 80, 80)
+        )
+        assertEquals(
+            SideFlowPolicy.WindowBounds(333, 133, 667, 1867),
+            SideFlowPolicy.freeformBounds(1000, 2000, "portrait", 80, 80)
+        )
+        assertEquals(
+            SideFlowPolicy.WindowBounds(0, 0, 1000, 2000),
+            SideFlowPolicy.freeformBounds(1000, 2000, "maximized", 80, 80)
+        )
+        assertEquals(
+            SideFlowPolicy.WindowBounds(250, 400, 750, 1600),
+            SideFlowPolicy.freeformBounds(1000, 2000, "custom", 50, 60)
+        )
+    }
+
+    @Test
+    fun windowingDragRejectsStructuredIntentTargets() {
+        assertTrue(SideFlowPolicy.canUseWindowingDrag(isPlainApp = true, hasIntentUri = false))
+        assertFalse(SideFlowPolicy.canUseWindowingDrag(isPlainApp = true, hasIntentUri = true))
+        assertFalse(SideFlowPolicy.canUseWindowingDrag(isPlainApp = false, hasIntentUri = false))
+    }
+
+    @Test
+    fun defaultShelfSeedingOnlyHappensWithoutExistingConfiguration() {
+        assertTrue(SideFlowPolicy.shouldSeedDefaultShelf(hasExistingConfiguration = false))
+        assertFalse(SideFlowPolicy.shouldSeedDefaultShelf(hasExistingConfiguration = true))
+    }
+
+    @Test
     fun ordinaryTapNeverRequestsFreeform() {
         assertFalse(SideFlowPolicy.shouldLaunchFreeform(false, true))
         assertFalse(SideFlowPolicy.shouldLaunchFreeform(false, false))

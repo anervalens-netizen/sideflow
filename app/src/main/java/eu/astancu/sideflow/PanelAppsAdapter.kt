@@ -30,6 +30,7 @@ class PanelAppsAdapter(
     private var currentColumns: Int = SideFlowPolicy.DEFAULT_COLUMNS
     private var forceFreeform: Boolean = false
     private var compactMode: Boolean = false
+    private var availablePanelWidthDp: Int = panelPrefs.panelWidthDp
     
     private var mutableApps = mutableListOf<AppInfo>()
     val currentList: List<AppInfo> get() = mutableApps
@@ -91,6 +92,13 @@ class PanelAppsAdapter(
     fun setColumns(cols: Int) {
         if (currentColumns != cols) {
             currentColumns = cols
+            notifyDataSetChanged()
+        }
+    }
+
+    fun setAvailablePanelWidthDp(widthDp: Int) {
+        if (availablePanelWidthDp != widthDp) {
+            availablePanelWidthDp = widthDp
             notifyDataSetChanged()
         }
     }
@@ -186,16 +194,19 @@ class PanelAppsAdapter(
                 androidx.core.graphics.ColorUtils.setAlphaComponent(sectionContentColor, 64)
             )
             val visible = section.showSectionTitle && !compactMode
+            val keepEditDropZone = isEditMode
             holder.title.visibility = if (visible) View.VISIBLE else View.GONE
-            holder.divider.visibility = if (visible) View.VISIBLE else View.GONE
+            holder.divider.visibility = if (visible || keepEditDropZone) View.VISIBLE else View.GONE
+            holder.divider.alpha = if (visible) 1f else 0.35f
             val lp = holder.itemView.layoutParams
-            lp.height = if (compactMode) 0 else ViewGroup.LayoutParams.WRAP_CONTENT
+            lp.height = if (compactMode && !keepEditDropZone) 0 else ViewGroup.LayoutParams.WRAP_CONTENT
             holder.itemView.layoutParams = lp
+            holder.itemView.minimumHeight = if (keepEditDropZone) context.dpToPx(24) else 0
             holder.itemView.setPadding(
                 holder.itemView.paddingLeft,
-                if (visible) context.dpToPx(8) else 0,
+                if (visible || keepEditDropZone) context.dpToPx(6) else 0,
                 holder.itemView.paddingRight,
-                if (visible) context.dpToPx(4) else 0
+                if (visible || keepEditDropZone) context.dpToPx(6) else 0
             )
             return
         }
@@ -210,9 +221,20 @@ class PanelAppsAdapter(
             
             val baseTextSize = if (isRich) 9f else 8f
 
+            val requestedIconDp = (baseIconSize * scale).toInt()
+            val fittedIconDp = if (compactMode) {
+                requestedIconDp
+            } else {
+                SideFlowPolicy.fitIconSizeDp(
+                    panelWidthDp = availablePanelWidthDp,
+                    columns = effectiveColumns,
+                    requestedIconDp = requestedIconDp,
+                    itemGapDp = panelPrefs.itemGapDp
+                )
+            }
             holder.ivIcon.layoutParams.let { lp ->
-                lp.width = (context.dpToPx(baseIconSize) * scale).toInt()
-                lp.height = (context.dpToPx(baseIconSize) * scale).toInt()
+                lp.width = context.dpToPx(fittedIconDp)
+                lp.height = context.dpToPx(fittedIconDp)
                 holder.ivIcon.layoutParams = lp
             }
             holder.tvName.textSize = baseTextSize * scale
@@ -380,6 +402,16 @@ class PanelAppsAdapter(
                     return@setOnLongClickListener true
                 }
 
+                if (!SideFlowPolicy.canUseWindowingDrag(
+                        isPlainApp = app.type == AppInfo.Type.APP,
+                        hasIntentUri = app.intentUri != null
+                    )
+                ) {
+                    // v1 deliberately avoids windowing drag for URL/deep-link/activity
+                    // entries because package-only drag state would lose the real target.
+                    return@setOnLongClickListener true
+                }
+
                 // Drag to Split Logic
                 if (panelPrefs.hapticEnabled) {
                     holder.itemView.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
@@ -443,42 +475,19 @@ class PanelAppsAdapter(
         try {
             val options = android.app.ActivityOptions.makeBasic()
             val displayMetrics = context.resources.displayMetrics
-            val w = displayMetrics.widthPixels
-            val h = displayMetrics.heightPixels
-            val prefersLandscape = detectLandscapeOrientation(intent.`package`, intent)
-
-            val bounds: Rect = when (panelPrefs.freeformWindowMode) {
-                PanelPreferences.FREEFORM_MODE_PORTRAIT -> {
-                    val left = w / 3
-                    val top = h / 15
-                    Rect(left, top, w - left, h - top)
-                }
-                PanelPreferences.FREEFORM_MODE_MAXIMIZED -> Rect(0, 0, w, h)
-                PanelPreferences.FREEFORM_MODE_CUSTOM -> {
-                    val winW = (w * panelPrefs.freeformCustomWidth / 100.0).toInt()
-                    val winH = (h * panelPrefs.freeformCustomHeight / 100.0).toInt()
-                    val left = (w - winW) / 2
-                    val top = (h - winH) / 2
-                    Rect(left, top, left + winW, top + winH)
-                }
-                else -> {
-                    if (prefersLandscape) {
-                        // 16:9 wide aspect for games/landscape apps
-                        val targetW = if (w > h) (w * 0.80).toInt() else (w * 0.90).toInt()
-                        val targetH = (targetW / 1.77).toInt().coerceAtMost((h * 0.85).toInt())
-                        val left = (w - targetW) / 2
-                        val top = (h - targetH) / 2
-                        Rect(left, top, left + targetW, top + targetH)
-                    } else {
-                        // 9:16 portrait aspect for normal apps (fixed for landscape host)
-                        val targetH = (h * 0.85).toInt()
-                        val targetW = (targetH * 9 / 16).toInt().coerceAtMost((w * 0.85).toInt())
-                        val left = (w - targetW) / 2
-                        val top = (h - targetH) / 2
-                        Rect(left, top, left + targetW, top + targetH)
-                    }
-                }
-            }
+            val policyBounds = SideFlowPolicy.freeformBounds(
+                screenWidthPx = displayMetrics.widthPixels,
+                screenHeightPx = displayMetrics.heightPixels,
+                mode = panelPrefs.freeformWindowMode,
+                customWidthPercent = panelPrefs.freeformCustomWidth,
+                customHeightPercent = panelPrefs.freeformCustomHeight
+            )
+            val bounds = Rect(
+                policyBounds.left,
+                policyBounds.top,
+                policyBounds.right,
+                policyBounds.bottom
+            )
             options.launchBounds = bounds
             Log.d("PanelAppsAdapter", "Launching Freeform: pkg=${intent.`package`}, bounds=$bounds")
 
@@ -503,21 +512,5 @@ class PanelAppsAdapter(
         }
     }
 
-    private fun detectLandscapeOrientation(packageName: String?, intent: Intent? = null): Boolean {
-        val pkg = packageName ?: intent?.`package` ?: intent?.component?.packageName ?: return false
-        return try {
-            val launchIntent = context.packageManager.getLaunchIntentForPackage(pkg)
-            val component = launchIntent?.component ?: return false
-            val activityInfo = context.packageManager.getActivityInfo(component, android.content.pm.PackageManager.GET_META_DATA)
-            when (activityInfo.screenOrientation) {
-                android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE,
-                android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE,
-                android.content.pm.ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE,
-                android.content.pm.ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE -> true
-                else -> false
-            }
-        } catch (e: Exception) {
-            false
-        }
-    }
+
 }
