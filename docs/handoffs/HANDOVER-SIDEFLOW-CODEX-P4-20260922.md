@@ -15,6 +15,7 @@ Use:
 - Working copy: server `/home/andrei/work/sideflow`
 - Base main: `2252cd20d9c7de71bce3d17684ebe2c055729303`
 - Current branch: `feat/sideflow-p4-appearance-presets`
+- WIP checkpoint commit: `80eedf1ac7de5a3c76c07ae14e3fa26875052a63`
 - P0–P3 are merged.
 - PR #5 P3 exact-main CI: `35712153290` SUCCESS.
 
@@ -33,9 +34,10 @@ P4 is **WIP, not ready to merge**. The working branch contains:
 
 Last local validation before handover:
 - `./gradlew --no-daemon testDebugUnitTest assembleDebug` — PASS.
+- Unit tests: 29/29 PASS (`AppearancePresetTest` 6, `ShelfConfigTest` 9, `ShortcutPolicyTest` 9, `SideFlowPolicyTest` 5).
 - P4 visual behavior is not device-validated yet.
 
-Do not discard/reset/stash/clean the branch. Continue from it.
+Do not discard/reset/stash/clean the branch. Continue from it. The checkpoint is intentionally WIP and **must not be merged as-is** because R0 Codex remediation is still open.
 
 ## Critical discovery: Codex Connector backlog
 
