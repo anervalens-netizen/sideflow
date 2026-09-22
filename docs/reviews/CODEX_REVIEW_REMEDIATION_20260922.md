@@ -279,7 +279,23 @@ The final P4 code batch completes the remaining explicit appearance-plan item an
 - **Optional section titles:** existing per-section title visibility remains intact and compatible with the card grouping.
 - **Hot-path hardening:** panel contrast is resolved once per app bind/theme pass instead of repeatedly for text/pseudo-icon/chip tinting; picker theme application likewise reuses one contrast decision.
 
-Local validation before final review: `57/57` unit tests PASS, `assembleDebug` PASS, `git diff --check` PASS. A fresh exact-head Codex review and CI run are still mandatory before PR #6 can merge.
+Local validation before final review: `57/57` unit tests PASS, `assembleDebug` PASS, `git diff --check` PASS. A fresh exact-head Codex review and CI run are still mandatory before active PR #7 can merge.
+
+## PR #7 — late review follow-up after R0 handoff
+
+PR #6 detached from the live branch after reviewed head `bdb931ee`; PR #7 is now the canonical final P4 review surface. Two Codex P2 findings were published late against the reviewed PR #6 head and still applied to the live P4 branch, so the review gate is reopened until PR #7 exact-head review is clean.
+
+| ID | Severity | Finding | Current assessment | Remediation evidence |
+| --- | --- | --- | --- | --- |
+| r4074696608 | P2 | Custom Realme gradient bypasses Panel Opacity by replacing the alpha-adjusted surface with fully opaque gradient stops | **RESOLVED (local)** | Both side panel and picker Realme gradient stops now use `SideFlowPolicy.applyOpacityToArgb(..., panelOpacity)`, preserving Panel Opacity as final rendered alpha. |
+| r4074696617 | P2 | Embedded prose URLs retain trailing `;` / `:` delimiters | **RESOLVED (local)** | Prose-only shared-target cleanup now includes semicolon and colon, while standalone URL payloads bypass punctuation trimming and preserve valid trailing `;`/`:`. Regressions cover both modes. |
+
+### PR #7 late-follow-up local validation
+
+- Gradle `testDebugUnitTest assembleDebug`: **PASS**.
+- Unit tests: **59/59 PASS**.
+- `git diff --check`: **PASS**.
+- PR #7 remains draft/unmerged; a fresh exact-head Codex review and CI are mandatory.
 
 ## Mandatory remediation order
 

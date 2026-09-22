@@ -340,8 +340,14 @@ class AppPickerPanelView @JvmOverloads constructor(
         } else if (theme == PanelPreferences.THEME_RICH) {
             drawable.setStroke((2 * density).toInt(), panelPrefs.resolvedPanelAccentColor())
         } else if (theme == PanelPreferences.THEME_REALME) {
-            val color1 = Color.parseColor("#333333")
-            val color2 = Color.parseColor("#1A1A1A")
+            val color1 = SideFlowPolicy.applyOpacityToArgb(
+                Color.parseColor("#333333"),
+                panelPrefs.panelOpacity
+            )
+            val color2 = SideFlowPolicy.applyOpacityToArgb(
+                Color.parseColor("#1A1A1A"),
+                panelPrefs.panelOpacity
+            )
             drawable.colors = intArrayOf(color1, color2)
             drawable.orientation = android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM
             drawable.setStroke((1 * density).toInt(), Color.parseColor("#33FFFFFF"))

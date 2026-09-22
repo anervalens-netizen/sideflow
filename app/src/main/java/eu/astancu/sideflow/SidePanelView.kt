@@ -680,8 +680,14 @@ class SidePanelView @JvmOverloads constructor(
                 } else if (theme == PanelPreferences.THEME_RICH) {
                     setStroke(context.dpToPx(2), panelPrefs.resolvedPanelAccentColor())
                 } else if (theme == PanelPreferences.THEME_REALME) {
-                    val color1 = Color.parseColor("#333333")
-                    val color2 = Color.parseColor("#1A1A1A")
+                    val color1 = SideFlowPolicy.applyOpacityToArgb(
+                        Color.parseColor("#333333"),
+                        panelPrefs.panelOpacity
+                    )
+                    val color2 = SideFlowPolicy.applyOpacityToArgb(
+                        Color.parseColor("#1A1A1A"),
+                        panelPrefs.panelOpacity
+                    )
                     colors = intArrayOf(color1, color2)
                     orientation = GradientDrawable.Orientation.TOP_BOTTOM
                     setStroke(context.dpToPx(1), Color.parseColor("#33FFFFFF"))
@@ -704,12 +710,14 @@ class SidePanelView @JvmOverloads constructor(
         binding.btnReboot.imageTintList = iconColorList
         binding.btnBack.imageTintList = iconColorList
 
-        binding.tvRamUsage.setTextColor(contentColor)
-        binding.tvBatTemp.setTextColor(contentColor)
         tintTextViews(
             binding.toolsContainer,
             androidx.core.graphics.ColorUtils.setAlphaComponent(contentColor, 176)
         )
+        // System-info values are primary data, not secondary tool labels. Apply
+        // their full-opacity content tint after the recursive secondary tint.
+        binding.tvRamUsage.setTextColor(contentColor)
+        binding.tvBatTemp.setTextColor(contentColor)
         binding.rvPanelApps.invalidateItemDecorations()
         
         val isGameMode = false // panelPrefs.getGameApps().contains(panelPrefs.currentForegroundPackage)

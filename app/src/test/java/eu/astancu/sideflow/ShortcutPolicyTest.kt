@@ -77,6 +77,30 @@ class ShortcutPolicyTest {
     }
 
     @Test
+    fun proseSharedUrlDropsSemicolonAndColonDelimiters() {
+        assertEquals(
+            "https://example.com/path",
+            ShortcutPolicy.extractTarget("See https://example.com/path; then continue")
+        )
+        assertEquals(
+            "https://example.com/path",
+            ShortcutPolicy.extractTarget("See https://example.com/path: then continue")
+        )
+    }
+
+    @Test
+    fun standaloneSharedUrlPreservesSemicolonAndColon() {
+        assertEquals(
+            "https://example.com/path;",
+            ShortcutPolicy.extractTarget("https://example.com/path;")
+        )
+        assertEquals(
+            "https://example.com/path:",
+            ShortcutPolicy.extractTarget("https://example.com/path:")
+        )
+    }
+
+    @Test
     fun supportsIntentAndCustomSchemeDeepLinks() {
         assertEquals(
             ShelfItemType.DEEP_LINK,
