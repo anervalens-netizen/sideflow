@@ -294,7 +294,14 @@ class PanelAppsAdapter(
                     setColor(android.graphics.Color.parseColor(chipColor))
                     cornerRadius = context.dpToPx(12).toFloat()
                 }
-                holder.ivIcon.setPadding(context.dpToPx(8), context.dpToPx(8), context.dpToPx(8), context.dpToPx(8))
+                val pseudoPaddingDp = SideFlowPolicy.pseudoIconPaddingDp(fittedIconDp)
+                val pseudoPaddingPx = context.dpToPx(pseudoPaddingDp)
+                holder.ivIcon.setPadding(
+                    pseudoPaddingPx,
+                    pseudoPaddingPx,
+                    pseudoPaddingPx,
+                    pseudoPaddingPx
+                )
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
                     holder.ivIcon.clipToOutline = true
                 }

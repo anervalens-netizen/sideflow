@@ -194,6 +194,22 @@ Codex reviewed b9f3eb2 and completed with one P1 and two P2 findings. All three 
 - git diff --check: **PASS**.
 - P4 remains draft/unmerged; another Codex review is required on the resulting exact HEAD.
 
+## PR #6 — fresh R0/P4 review round 6
+
+Codex reviewed 5cf70ef9 and completed with two P2 findings. Both are remediated locally in the next commit; another exact-head review is mandatory.
+
+| ID | Severity | Finding | Current assessment | Remediation evidence |
+| --- | --- | --- | --- | --- |
+| r4072311449 | P2 | Side-panel holders keep Rich layouts after a preset switches the UI theme to Origin | **RESOLVED (local)** | SidePanelView tracks the applied item-layout theme and detaches/re-attaches the adapter while clearing the recycled pool whenever the theme changes, forcing holder reinflation. |
+| r4072311456 | P2 | Fixed 8dp pseudo-icon padding can consume the entire fitted icon at narrow 6-column Rich layouts | **RESOLVED (local)** | Pseudo-icon padding now scales with fitted icon size while reserving a minimum drawable area; regression covers 12dp, 40dp, 8dp and 6dp cases. |
+
+### PR #6 round-6 local validation
+
+- Gradle testDebugUnitTest + assembleDebug: **PASS**.
+- Unit tests: **52/52 PASS**.
+- git diff --check: **PASS**.
+- P4 remains draft/unmerged; another Codex review is required on the resulting exact HEAD.
+
 ## Mandatory remediation order
 
 1. **Privacy / misleading UI first:** PR #2 donation UI, backup filename ignore, PR #5 Auto Backup and export warning.

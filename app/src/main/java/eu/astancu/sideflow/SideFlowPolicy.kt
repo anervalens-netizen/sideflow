@@ -96,6 +96,17 @@ object SideFlowPolicy {
             effectiveAlpha.coerceIn(0, 255) >= 192 &&
             surfaceIsLight
 
+    fun pseudoIconPaddingDp(
+        fittedIconDp: Int,
+        desiredPaddingDp: Int = 8,
+        minimumDrawableDp: Int = 6
+    ): Int {
+        val size = fittedIconDp.coerceAtLeast(1)
+        val minimumDrawable = minimumDrawableDp.coerceAtLeast(1).coerceAtMost(size)
+        val maxPadding = ((size - minimumDrawable) / 2).coerceAtLeast(0)
+        return desiredPaddingDp.coerceAtLeast(0).coerceAtMost(maxPadding)
+    }
+
     fun applyOpacityToArgb(argb: Int, opacityPercent: Int): Int {
         val baseAlpha = (argb ushr 24) and 0xFF
         val opacity = sanitizePanelOpacity(opacityPercent)

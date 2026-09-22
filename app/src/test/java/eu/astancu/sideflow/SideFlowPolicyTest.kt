@@ -125,6 +125,14 @@ class SideFlowPolicyTest {
     }
 
     @Test
+    fun pseudoIconPaddingAlwaysLeavesDrawableSpace() {
+        assertEquals(3, SideFlowPolicy.pseudoIconPaddingDp(12))
+        assertEquals(8, SideFlowPolicy.pseudoIconPaddingDp(40))
+        assertEquals(0, SideFlowPolicy.pseudoIconPaddingDp(6))
+        assertEquals(1, SideFlowPolicy.pseudoIconPaddingDp(8))
+    }
+
+    @Test
     fun panelOpacityScalesExistingBackgroundAlpha() {
         assertEquals(0x80112233.toInt(), SideFlowPolicy.applyOpacityToArgb(0xFF112233.toInt(), 50))
         assertEquals(0x40112233.toInt(), SideFlowPolicy.applyOpacityToArgb(0x80112233.toInt(), 50))

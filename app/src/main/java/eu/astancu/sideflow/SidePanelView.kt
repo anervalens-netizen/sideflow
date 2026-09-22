@@ -36,6 +36,7 @@ class SidePanelView @JvmOverloads constructor(
     private val binding: SidePanelLayoutBinding = SidePanelLayoutBinding.inflate(LayoutInflater.from(context), this, true)
     private val adapter: PanelAppsAdapter
     private val panelPrefs = PanelPreferences(context)
+    private var appliedItemLayoutTheme: String = panelPrefs.uiTheme
     private var currentCols = 1
     private var isPickerOpenInternal = false
     
@@ -587,7 +588,18 @@ class SidePanelView @JvmOverloads constructor(
         }
     }
 
+    private fun ensureItemLayoutMatchesTheme() {
+        val theme = panelPrefs.uiTheme
+        if (theme == appliedItemLayoutTheme) return
+
+        appliedItemLayoutTheme = theme
+        binding.rvPanelApps.adapter = null
+        binding.rvPanelApps.recycledViewPool.clear()
+        binding.rvPanelApps.adapter = adapter
+    }
+
     fun updateStyles() {
+        ensureItemLayoutMatchesTheme()
         if (!isPickerOpenInternal) {
             val isGameMode = false // panelPrefs.getGameApps().contains(panelPrefs.currentForegroundPackage)
             currentCols = if (isGameMode) 2 else panelPrefs.panelColumns
