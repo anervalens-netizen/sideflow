@@ -84,6 +84,18 @@
             android:theme="@style/Theme.SidePanel.M3" />
 
         <activity
+            android:name=".ShortcutEditorActivity"
+            android:label="Add to SideFlow"
+            android:theme="@style/Theme.SidePanel.M3"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
+        <activity
             android:name=".ShelfEditorActivity"
             android:label="Shelf sections"
             android:theme="@style/Theme.SidePanel.M3" />
