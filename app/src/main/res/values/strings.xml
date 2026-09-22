@@ -28,6 +28,8 @@
     <string name="panel_tip">Long press the right edge to open the panel</string>
     <string name="accessibility_service_description">Detects system navigation gestures to effortlessly auto-close the floating panel.</string>
 
+    <string name="section_shelf">Shelf &amp; Sections</string>
+    <string name="main_menu_shelf_desc">Organize groups, titles, order and per-section columns</string>
     <string name="section_appearance">Appearance</string>
     <string name="section_interaction">Interaction</string>
     <string name="section_handle">Handle &amp; Pill</string>

@@ -226,4 +226,8 @@
     <string name="action_lock_screen">Bloqueo de Pantalla</string>
     <string name="action_power_menu">Menú de Apagado</string>
     <string name="action_move_handle">Mover tirador (Arrastrar)</string>
+    <string name="section_shelf">Estante y secciones</string>
+    <string name="main_menu_shelf_desc">Organiza grupos, títulos, orden y columnas por sección</string>
+    <string name="panel_width">Ancho del panel</string>
+    <string name="item_gap">Espaciado de elementos</string>
 </resources>

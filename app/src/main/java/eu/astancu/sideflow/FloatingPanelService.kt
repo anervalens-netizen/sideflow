@@ -1081,19 +1081,35 @@ class FloatingPanelService : Service() {
                         
                         tools
                     }
-                    else -> emptyList<AppInfo>()
+                    else -> repository.getFolderItems(currentFolderId!!)
                 }
             } else {
                 val baseApps = repository.getPanelApps().toMutableList()
-                
-                // Add "Tools" folder button at the top if enabled
+
+                // Keep the built-in tools folder as a synthetic local section;
+                // it is never written into the user's persisted shelf model.
                 if (panelPrefs.showToolsPanelButton) {
-                    val toolsBtn = AppInfo("sideflow.tool.tools", "Tools", type = AppInfo.Type.TOOL)
+                    val toolsBtn = AppInfo(
+                        packageName = "sideflow.tool.tools",
+                        appName = "Tools",
+                        type = AppInfo.Type.TOOL,
+                        sectionId = "__tools__",
+                        sectionColumns = SideFlowPolicy.DEFAULT_COLUMNS
+                    )
                     if (baseApps.none { it.identifier == toolsBtn.identifier }) {
+                        val toolsHeader = AppInfo(
+                            packageName = "sideflow.section.__tools__",
+                            appName = "Tools",
+                            type = AppInfo.Type.SECTION_HEADER,
+                            sectionId = "__tools__",
+                            sectionColumns = SideFlowPolicy.DEFAULT_COLUMNS,
+                            showSectionTitle = false
+                        )
                         baseApps.add(0, toolsBtn)
+                        baseApps.add(0, toolsHeader)
                     }
                 }
-                
+
                 baseApps
             }
             
