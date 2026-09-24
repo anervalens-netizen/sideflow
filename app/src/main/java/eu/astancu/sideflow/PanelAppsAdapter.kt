@@ -270,6 +270,7 @@ class PanelAppsAdapter(
                     app.packageName == "sideflow.tool.volume_down" -> R.drawable.ic_brightness_down
                     app.packageName == "sideflow.tool.brightness_up" -> R.drawable.ic_brightness_up
                     app.packageName == "sideflow.tool.brightness_down" -> R.drawable.ic_brightness_down
+                    app.packageName == ChatShortcutDefaults.ADD_TOOL_REFERENCE -> R.drawable.ic_plus
                     app.packageName == "sideflow.shortcut.one_hand" -> android.R.drawable.ic_menu_crop
                     app.packageName == "sideflow.shortcut.reboot" -> android.R.drawable.ic_lock_power_off
                     app.type == AppInfo.Type.URL -> android.R.drawable.ic_menu_view

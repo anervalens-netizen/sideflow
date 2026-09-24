@@ -14,6 +14,10 @@ class ShortcutEditorActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_ITEM_ID = "extra_shelf_item_id"
+        const val EXTRA_SECTION_ID = "extra_section_id"
+        const val EXTRA_ICON_PACKAGE = "extra_icon_package"
+        const val EXTRA_TITLE = "extra_title"
+        const val EXTRA_TARGET = "extra_target"
         private const val STATE_EDITING_ITEM_ID = "state_editing_item_id"
         private const val STATE_SECTION_ID = "state_section_id"
         private const val STATE_ICON_PACKAGE = "state_icon_package"
@@ -46,42 +50,70 @@ class ShortcutEditorActivity : AppCompatActivity() {
             intent.getStringExtra(EXTRA_ITEM_ID)
         }
         val existing = editingItemId?.let(prefs::getShelfItem)
-        selectedSectionId = if (savedInstanceState?.containsKey(STATE_SECTION_ID) == true) {
-            savedInstanceState.getString(STATE_SECTION_ID)
-        } else {
-            findSectionId(editingItemId)
-                ?: prefs.getShelfConfig().sections.firstOrNull()?.id
-        }
-        selectedIconPackage = if (savedInstanceState?.containsKey(STATE_ICON_PACKAGE) == true) {
-            savedInstanceState.getString(STATE_ICON_PACKAGE)
-        } else {
-            existing?.iconPackage
-        }
 
         val sharedTarget = if (intent.action == Intent.ACTION_SEND && intent.type == "text/plain") {
             ShortcutPolicy.extractTarget(intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString())
         } else {
             null
         }
+        val requestedTarget = intent.getStringExtra(EXTRA_TARGET)
+        val initialTarget = existing?.reference
+            ?: sharedTarget
+            ?: requestedTarget.orEmpty()
+        val isChatGptShortcut = existing == null && (
+            ChatShortcutDefaults.isChatGptTarget(initialTarget) ||
+                intent.getStringExtra(EXTRA_SECTION_ID) == ChatShortcutDefaults.SECTION_ID
+            )
 
-        val initialTarget = existing?.reference ?: sharedTarget.orEmpty()
+        val config = prefs.getShelfConfig()
+        val requestedSectionId = intent.getStringExtra(EXTRA_SECTION_ID)
+            ?.takeIf { requested -> config.sections.any { it.id == requested } }
+        val chatGptSectionId = ChatShortcutDefaults.SECTION_ID
+            .takeIf { isChatGptShortcut && config.sections.any { it.id == ChatShortcutDefaults.SECTION_ID } }
+
+        selectedSectionId = if (savedInstanceState?.containsKey(STATE_SECTION_ID) == true) {
+            savedInstanceState.getString(STATE_SECTION_ID)
+        } else {
+            findSectionId(editingItemId)
+                ?: requestedSectionId
+                ?: chatGptSectionId
+                ?: config.sections.firstOrNull()?.id
+        }
+        selectedIconPackage = if (savedInstanceState?.containsKey(STATE_ICON_PACKAGE) == true) {
+            savedInstanceState.getString(STATE_ICON_PACKAGE)
+        } else {
+            existing?.iconPackage
+                ?: intent.getStringExtra(EXTRA_ICON_PACKAGE)
+                ?: ChatShortcutDefaults.ICON_PACKAGE.takeIf { isChatGptShortcut }
+        }
+
         binding.etTarget.setText(initialTarget)
 
         val sharedTitle = intent.getStringExtra(Intent.EXTRA_TITLE)
             ?: intent.getStringExtra(Intent.EXTRA_SUBJECT)
+        val requestedTitle = intent.getStringExtra(EXTRA_TITLE)
         val initialTitle = existing?.label
+            ?: requestedTitle?.trim()?.takeIf { it.isNotBlank() }
             ?: sharedTitle?.trim()?.takeIf { it.isNotBlank() }
             ?: initialTarget.takeIf { it.isNotBlank() }?.let(ShortcutPolicy::suggestedLabel)
+            ?: ChatShortcutDefaults.DEFAULT_TITLE.takeIf { isChatGptShortcut }
             ?: ""
 
         binding.etTitle.setText(initialTitle)
         titleWasAutofilled = if (savedInstanceState?.containsKey(STATE_TITLE_AUTOFILLED) == true) {
             savedInstanceState.getBoolean(STATE_TITLE_AUTOFILLED)
         } else {
-            existing == null && initialTitle.isNotBlank() && sharedTitle.isNullOrBlank()
+            existing == null &&
+                initialTitle.isNotBlank() &&
+                sharedTitle.isNullOrBlank() &&
+                requestedTitle.isNullOrBlank()
         }
 
-        binding.toolbar.title = if (existing == null) "Add shortcut" else "Edit shortcut"
+        binding.toolbar.title = when {
+            existing != null -> "Edit shortcut"
+            isChatGptShortcut -> "Add ChatGPT chat"
+            else -> "Add shortcut"
+        }
         binding.btnSave.text = if (existing == null) "Save shortcut" else "Update shortcut"
         binding.btnDelete.visibility = if (existing == null) View.GONE else View.VISIBLE
 

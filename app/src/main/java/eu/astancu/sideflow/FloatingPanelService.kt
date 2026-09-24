@@ -701,6 +701,16 @@ class FloatingPanelService : Service() {
                     "sideflow.tool.volume_down" -> adjustVolume(android.media.AudioManager.ADJUST_LOWER)
                     "sideflow.tool.brightness_up" -> adjustBrightness(15)
                     "sideflow.tool.brightness_down" -> adjustBrightness(-15)
+                    ChatShortcutDefaults.ADD_TOOL_REFERENCE -> {
+                        closePanel()
+                        val editor = Intent(this@FloatingPanelService, ShortcutEditorActivity::class.java).apply {
+                            putExtra(ShortcutEditorActivity.EXTRA_SECTION_ID, ChatShortcutDefaults.SECTION_ID)
+                            putExtra(ShortcutEditorActivity.EXTRA_ICON_PACKAGE, ChatShortcutDefaults.ICON_PACKAGE)
+                            putExtra(ShortcutEditorActivity.EXTRA_TITLE, ChatShortcutDefaults.DEFAULT_TITLE)
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        startActivity(editor)
+                    }
                 }
             }
             visibility = View.GONE 
