@@ -626,9 +626,9 @@ class FloatingPanelService : Service() {
 
         edgeHandleView = EdgeHandleView(this).apply {
             onTrigger = {
-                refreshApps {
-                    openPanel()
-                }
+                // The shelf is preloaded at service startup and refreshed on open.
+                // Start the animation immediately instead of waiting for a second load.
+                openPanel()
             }
             onAdjustBrightness = { delta ->
                 adjustBrightness(delta)
