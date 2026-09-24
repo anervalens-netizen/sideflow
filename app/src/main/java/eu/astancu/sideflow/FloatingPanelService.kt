@@ -18,6 +18,7 @@ import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
 import androidx.core.app.NotificationCompat
+import androidx.core.view.doOnPreDraw
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -893,7 +894,6 @@ class FloatingPanelService : Service() {
     private fun openPanel() {
         if (isPanelOpen || !panelPrefs.serviceEnabled) return
         isPanelOpen = true
-        refreshApps() // Load apps in background while panel opens
         initRootLayout()
         if (rootLayout?.parent == null) {
             windowManager.addView(rootLayout, rootParams)
@@ -911,10 +911,15 @@ class FloatingPanelService : Service() {
             panel.alpha = 0f
             panel.translationX = if (isRight) 1000f else -1000f
             panel.visibility = View.VISIBLE
-            panel.post {
-                val panelWidth = panel.width.toFloat()
-                val stiffness = panelPrefs.animSpeed.toFloat()
-                SpringAnimator.animateOpen(panel, if (isRight) panelWidth else -panelWidth, stiffness = stiffness)
+            panel.doOnPreDraw {
+                if (isPanelOpen) {
+                    val panelWidth = panel.width.toFloat()
+                    val stiffness = panelPrefs.animSpeed.toFloat()
+                    SpringAnimator.animateOpen(panel, if (isRight) panelWidth else -panelWidth, stiffness = stiffness) {
+                        // Avoid list/layout updates competing with the opening animation.
+                        if (isPanelOpen) refreshApps()
+                    }
+                }
             }
         }
         edgeHandleView?.visibility = View.GONE

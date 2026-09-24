@@ -72,6 +72,12 @@ class PanelAccessibilityService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         isRunning = true
+        // Recover an enabled sidebar after process cleanup in the same boot.
+        // Explicit STOP persists serviceEnabled=false and must remain authoritative.
+        if (panelPrefs.serviceEnabled) {
+            FloatingPanelService.recoverIfDesired(this)
+            return
+        }
         val bootCount = panelPrefs.currentBootCount()
         if (SideFlowRecoveryPolicy.shouldRecoverForBoot(
                 panelPrefs.autoStart,
