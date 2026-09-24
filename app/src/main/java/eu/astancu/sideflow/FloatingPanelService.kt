@@ -126,23 +126,26 @@ class FloatingPanelService : Service() {
         const val ACTION_TOGGLE_ROTATION = "eu.astancu.sideflow.TOGGLE_ROTATION"
         const val ACTION_OPEN_FAV_APP = "eu.astancu.sideflow.OPEN_FAV_APP"
 
-        fun recoverIfDesired(context: Context): Boolean {
+        fun recoverIfDesired(context: Context, enableIfStopped: Boolean = false): Boolean {
+            if (isRunning) return true
             val prefs = PanelPreferences(context)
             val overlayAllowed = android.provider.Settings.canDrawOverlays(context)
-            if (!SideFlowRecoveryPolicy.shouldRecover(prefs.autoStart, isRunning, overlayAllowed)) {
-                return false
-            }
+            val previousEnabled = prefs.serviceEnabled
+            val requested = previousEnabled || enableIfStopped
+            if (!SideFlowRecoveryPolicy.shouldRecover(requested, false, overlayAllowed)) return false
 
-            prefs.serviceEnabled = true
+            if (!previousEnabled && enableIfStopped) {
+                prefs.setServiceEnabled(true, commit = true, recordManualDisable = false)
+            }
             val serviceIntent = Intent(context, FloatingPanelService::class.java)
             return try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    context.startForegroundService(serviceIntent)
-                } else {
-                    context.startService(serviceIntent)
-                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) context.startForegroundService(serviceIntent)
+                else context.startService(serviceIntent)
                 true
             } catch (failure: RuntimeException) {
+                if (!previousEnabled && enableIfStopped) {
+                    prefs.setServiceEnabled(false, commit = true, recordManualDisable = false)
+                }
                 Log.w(TAG, "Unable to recover SideFlow service", failure)
                 false
             }

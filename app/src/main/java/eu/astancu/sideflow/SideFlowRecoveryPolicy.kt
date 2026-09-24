@@ -2,8 +2,21 @@ package eu.astancu.sideflow
 
 object SideFlowRecoveryPolicy {
     fun shouldRecover(
-        autoStart: Boolean,
+        requested: Boolean,
         serviceRunning: Boolean,
         overlayAllowed: Boolean
-    ): Boolean = autoStart && !serviceRunning && overlayAllowed
+    ): Boolean = requested && !serviceRunning && overlayAllowed
+
+    fun shouldRecoverForBoot(
+        autoStart: Boolean,
+        serviceRunning: Boolean,
+        overlayAllowed: Boolean,
+        currentBootCount: Int,
+        handledBootCount: Int
+    ): Boolean =
+        autoStart &&
+            currentBootCount >= 0 &&
+            currentBootCount != handledBootCount &&
+            !serviceRunning &&
+            overlayAllowed
 }

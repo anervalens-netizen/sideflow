@@ -399,7 +399,7 @@ class AppearanceSettingsActivity : AppCompatActivity() {
         }
 
         binding.btnPickBg.setOnClickListener {
-            if (panelPrefs.uiTheme == PanelPreferences.THEME_ORIGIN) {
+            if (!AppearancePresetCatalog.canEditBackground(panelPrefs.uiTheme, panelPrefs.appearancePreset)) {
                 binding.root.showModernToast("Background color is locked for OriginOS theme")
                 return@setOnClickListener
             }

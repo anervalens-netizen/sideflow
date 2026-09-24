@@ -17,11 +17,18 @@ class BootReceiver : BroadcastReceiver() {
             action != "android.intent.action.QUICKBOOT_POWERON") return
 
         val prefs = PanelPreferences(context)
-        if (!prefs.autoStart) return
-        
+        val bootCount = prefs.currentBootCount()
+        if (!SideFlowRecoveryPolicy.shouldRecoverForBoot(
+                prefs.autoStart,
+                FloatingPanelService.isRunning,
+                android.provider.Settings.canDrawOverlays(context),
+                bootCount,
+                prefs.lastRecoveryBootCount()
+            )) return
         if (!isAccessibilityServiceEnabled(context)) return
-
-        FloatingPanelService.recoverIfDesired(context)
+        if (FloatingPanelService.recoverIfDesired(context, enableIfStopped = true)) {
+            prefs.markRecoveryBootHandled(bootCount)
+        }
     }
 
     private fun isAccessibilityServiceEnabled(context: Context): Boolean {

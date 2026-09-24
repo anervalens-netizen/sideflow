@@ -21,6 +21,7 @@ class PanelPreferences(context: Context) {
         private const val KEY_SHELF_CONFIG = "shelf_config_v1"
         private const val KEY_PANEL_SIDE = "panel_side"
         private const val KEY_AUTO_START = "auto_start"
+        private const val KEY_LAST_RECOVERY_BOOT_COUNT = "last_recovery_boot_count"
         private const val KEY_SHOW_PILL = "show_pill"
         private const val KEY_HAPTIC_ENABLED = "haptic_enabled"
         private const val KEY_PANEL_OPACITY = "panel_opacity"
@@ -882,9 +883,35 @@ class PanelPreferences(context: Context) {
         get() = prefs.getBoolean("service_enabled", true)
         set(value) = setServiceEnabled(value, false)
 
-    fun setServiceEnabled(enabled: Boolean, commit: Boolean = false) {
+    fun setServiceEnabled(
+        enabled: Boolean,
+        commit: Boolean = false,
+        recordManualDisable: Boolean = true
+    ) {
+        val bootCount = if (!enabled && recordManualDisable) currentBootCount() else -1
         prefs.edit(commit = commit) {
             putBoolean("service_enabled", enabled)
+            if (bootCount >= 0) {
+                putInt(KEY_LAST_RECOVERY_BOOT_COUNT, bootCount)
+            }
+        }
+    }
+
+    fun currentBootCount(): Int =
+        runCatching {
+            android.provider.Settings.Global.getInt(
+                appContext.contentResolver,
+                android.provider.Settings.Global.BOOT_COUNT
+            )
+        }.getOrDefault(-1)
+
+    fun lastRecoveryBootCount(): Int =
+        prefs.getInt(KEY_LAST_RECOVERY_BOOT_COUNT, -1)
+
+    fun markRecoveryBootHandled(bootCount: Int = currentBootCount()) {
+        if (bootCount < 0) return
+        prefs.edit(commit = true) {
+            putInt(KEY_LAST_RECOVERY_BOOT_COUNT, bootCount)
         }
     }
 

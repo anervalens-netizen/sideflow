@@ -127,6 +127,28 @@ class AppearancePresetTest {
     }
 
     @Test
+    fun customUnlocksBackgroundPickerEvenWhenOriginUiStyleIsRetained() {
+        assertTrue(
+            AppearancePresetCatalog.canEditBackground(
+                PanelPreferences.THEME_ORIGIN,
+                AppearancePresetKey.CUSTOM
+            )
+        )
+        assertFalse(
+            AppearancePresetCatalog.canEditBackground(
+                PanelPreferences.THEME_ORIGIN,
+                AppearancePresetKey.SMOKE_GLASS
+            )
+        )
+        assertTrue(
+            AppearancePresetCatalog.canEditBackground(
+                PanelPreferences.THEME_RICH,
+                AppearancePresetKey.SMOKE_GLASS
+            )
+        )
+    }
+
+    @Test
     fun customHasNoForcedSpec() {
         assertNull(AppearancePresetCatalog.spec(AppearancePresetKey.CUSTOM))
     }
