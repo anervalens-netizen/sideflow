@@ -19,18 +19,9 @@ class BootReceiver : BroadcastReceiver() {
         val prefs = PanelPreferences(context)
         if (!prefs.autoStart) return
         
-        // Force service to be enabled on reboot if autoStart is true, 
-        // even if it was stopped via notification in previous session.
-        prefs.serviceEnabled = true
-        
         if (!isAccessibilityServiceEnabled(context)) return
 
-        val serviceIntent = Intent(context, FloatingPanelService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(serviceIntent)
-        } else {
-            context.startService(serviceIntent)
-        }
+        FloatingPanelService.recoverIfDesired(context)
     }
 
     private fun isAccessibilityServiceEnabled(context: Context): Boolean {

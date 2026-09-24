@@ -72,6 +72,11 @@ class PanelAccessibilityService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         isRunning = true
+        // OxygenOS can suppress BOOT_COMPLETED for sideloaded apps while
+        // Accessibility itself reconnects after unlock. Reuse the same
+        // persisted auto-start policy as BootReceiver so the sidebar recovers
+        // without requiring the app UI to be opened.
+        FloatingPanelService.recoverIfDesired(this)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

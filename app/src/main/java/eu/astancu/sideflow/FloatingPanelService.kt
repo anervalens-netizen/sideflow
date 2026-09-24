@@ -125,6 +125,28 @@ class FloatingPanelService : Service() {
         const val ACTION_LAUNCH_CAMERA = "eu.astancu.sideflow.LAUNCH_CAMERA"
         const val ACTION_TOGGLE_ROTATION = "eu.astancu.sideflow.TOGGLE_ROTATION"
         const val ACTION_OPEN_FAV_APP = "eu.astancu.sideflow.OPEN_FAV_APP"
+
+        fun recoverIfDesired(context: Context): Boolean {
+            val prefs = PanelPreferences(context)
+            val overlayAllowed = android.provider.Settings.canDrawOverlays(context)
+            if (!SideFlowRecoveryPolicy.shouldRecover(prefs.autoStart, isRunning, overlayAllowed)) {
+                return false
+            }
+
+            prefs.serviceEnabled = true
+            val serviceIntent = Intent(context, FloatingPanelService::class.java)
+            return try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(serviceIntent)
+                } else {
+                    context.startService(serviceIntent)
+                }
+                true
+            } catch (failure: RuntimeException) {
+                Log.w(TAG, "Unable to recover SideFlow service", failure)
+                false
+            }
+        }
     }
 
     override fun onCreate() {
