@@ -587,7 +587,7 @@ class SidePanelView @JvmOverloads constructor(
     private fun updateNavigationUI() {
         val inFolder = navigationStack.isNotEmpty()
         binding.btnBack.visibility = if (inFolder) View.VISIBLE else View.GONE
-        binding.btnClose.visibility = if (inFolder) View.GONE else View.VISIBLE
+        binding.btnClose.visibility = if (inFolder || !panelPrefs.showPickerToggle) View.GONE else View.VISIBLE
         applyTheme()
         updateSideLayout()
     }
@@ -643,6 +643,7 @@ class SidePanelView @JvmOverloads constructor(
 
     fun applyTheme() {
         val inFolder = navigationStack.isNotEmpty()
+        binding.btnClose.visibility = if (inFolder || !panelPrefs.showPickerToggle) View.GONE else View.VISIBLE
         val usesDarkContent = panelPrefs.panelUsesDarkContent()
         val showTools = panelPrefs.showTools && !inFolder
         binding.toolsContainer.visibility = if (showTools) View.VISIBLE else View.GONE

@@ -61,6 +61,7 @@ class PanelPreferences(context: Context) {
         private const val KEY_SHOW_SYS_INFO = "show_sys_info"
         private const val KEY_SHOW_SCREENSHOT_TOOL = "show_screenshot_tool"
         private const val KEY_SHOW_TOOLS_PANEL_BUTTON = "show_tools_panel_button"
+        private const val KEY_SHOW_PICKER_TOGGLE = "show_picker_toggle"
         private const val KEY_SHOW_POWER_MENU = "show_power_menu"
         private const val KEY_SHOW_VOLUME_KEYS = "show_volume_keys"
         private const val KEY_SHOW_BRIGHTNESS_KEYS = "show_brightness_keys"
@@ -551,6 +552,10 @@ class PanelPreferences(context: Context) {
     var showToolsPanelButton: Boolean
         get() = prefs.getBoolean(KEY_SHOW_TOOLS_PANEL_BUTTON, DEFAULT_SHOW_TOOLS_PANEL)
         set(value) = prefs.edit { putBoolean(KEY_SHOW_TOOLS_PANEL_BUTTON, value) }
+
+    var showPickerToggle: Boolean
+        get() = prefs.getBoolean(KEY_SHOW_PICKER_TOGGLE, true)
+        set(value) = prefs.edit { putBoolean(KEY_SHOW_PICKER_TOGGLE, value) }
 
     var showPowerMenu: Boolean
         get() = prefs.getBoolean(KEY_SHOW_POWER_MENU, false)

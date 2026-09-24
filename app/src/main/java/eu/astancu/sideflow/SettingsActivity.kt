@@ -116,6 +116,7 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         binding.switchTools.isChecked = panelPrefs.showTools
+        binding.switchPickerToggle.isChecked = panelPrefs.showPickerToggle
         binding.switchHideBg.isChecked = panelPrefs.hideBackground
         binding.switchUseCustomAccent.isChecked = panelPrefs.useCustomAccent
 
@@ -463,6 +464,11 @@ class SettingsActivity : AppCompatActivity() {
 
         binding.switchTools.setOnCheckedChangeListener { _, isChecked ->
             panelPrefs.showTools = isChecked
+            applyOnly()
+        }
+
+        binding.switchPickerToggle.setOnCheckedChangeListener { _, isChecked ->
+            panelPrefs.showPickerToggle = isChecked
             applyOnly()
         }
 
