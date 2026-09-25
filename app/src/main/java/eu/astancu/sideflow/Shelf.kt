@@ -11,6 +11,9 @@ data class Shelf(val sections: List<ShelfSection>) {
         require(PACKAGE.matches(packageName))
         val source = if (sections.isEmpty() && sectionId == "apps") empty().sections else sections
         require(source.any { it.id == sectionId })
+        require(source.none { section -> section.items.any { it.reference == packageName } }) {
+            "This app is already in the sidebar. Remove it before adding it to another section."
+        }
         require(source.sumOf { it.items.size } < 256)
         val item = ShelfItem(UUID.randomUUID().toString(), packageName, label)
         return copy(sections = source.map { section ->

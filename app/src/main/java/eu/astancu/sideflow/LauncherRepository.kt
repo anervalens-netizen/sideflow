@@ -20,9 +20,6 @@ class LauncherRepository(private val context: Context) {
         return manager.queryIntentActivities(intent, 0).map { App(it.activityInfo.packageName, it.loadLabel(manager).toString()) }
             .distinctBy { it.packageName }.sortedBy { it.label.lowercase() }
     }
-    fun label(packageName: String): String? = try {
-        manager.getApplicationLabel(manager.getApplicationInfo(packageName, 0)).toString()
-    } catch (_: PackageManager.NameNotFoundException) { null }
     fun launch(packageName: String): Boolean {
         val intent = manager.getLaunchIntentForPackage(packageName) ?: return false
         return try {

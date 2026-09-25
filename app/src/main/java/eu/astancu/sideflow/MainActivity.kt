@@ -31,6 +31,11 @@ class MainActivity : Activity() {
     private var alive = true
     private var request = 0
     private val runtimeObserver: () -> Unit = { if (alive && ::root.isInitialized) render() }
+    private val shelfObserver: (Shelf) -> Unit = { updated ->
+        shelf = updated
+        loadError = null
+        if (alive && ::root.isInitialized) render()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,11 +51,17 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         (application as SideFlowApp).observeRuntime(runtimeObserver)
+        ShelfRuntime.observe(this, shelfObserver)
+        ShelfRuntime.peek(this)?.let {
+            shelf = it
+            loadError = null
+        }
         if (::root.isInitialized) render()
     }
 
     override fun onPause() {
         (application as SideFlowApp).removeRuntimeObserver(runtimeObserver)
+        ShelfRuntime.removeObserver(this, shelfObserver)
         super.onPause()
     }
 

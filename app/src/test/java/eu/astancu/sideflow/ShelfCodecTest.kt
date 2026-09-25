@@ -60,6 +60,17 @@ class ShelfCodecTest {
         assertEquals("two", ShelfCodec.current(ShelfCodec.encode(removed)).sections.first().items.single().id)
     }
 
+    @Test fun repeatedAddCannotDuplicateTargetWithinOrAcrossSections() {
+        val original = ShelfCodec.legacy(legacy)
+        for (section in listOf("first", "second")) {
+            try {
+                original.add(section, "test.example.alpha", "Another label")
+                fail("Duplicate package must be rejected")
+            } catch (_: IllegalArgumentException) { }
+        }
+        assertEquals(original, ShelfCodec.current(ShelfCodec.encode(original)))
+    }
+
     private fun rejects(json: String) {
         try {
             ShelfCodec.legacy(json)

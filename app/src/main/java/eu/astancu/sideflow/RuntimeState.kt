@@ -19,7 +19,7 @@ class RuntimeState(context: Context) {
     private val legacy = app.getSharedPreferences("side_panel_prefs", Context.MODE_PRIVATE)
     init {
         if (!state.contains("enabled")) {
-            state.edit().putBoolean("enabled", legacy.getBoolean("service_enabled", false))
+            state.edit().putBoolean("enabled", legacy.getBoolean("service_enabled", legacy.all.isNotEmpty()))
                 .putInt("boot", legacy.getInt("last_recovery_boot_count", -1)).commit()
         }
     }
