@@ -1,3 +1,5 @@
+> Historical pre-minimal document. Current scope and installed state: [SideFlow minimal delivery](../DELIVERY_20260925.md). Do not resume the old feature roadmap or review gates from this file.
+
 # HANDOVER — SideFlow Codex Remediation + P4 — 2026-09-22
 
 ## Objective

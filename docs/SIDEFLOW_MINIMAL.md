@@ -1,4 +1,4 @@
-# SideFlow Minimal 0.2.0
+# SideFlow Minimal 0.2.1
 
 ## Architecture
 
@@ -6,7 +6,7 @@ One Android module uses Kotlin Views and RecyclerView. `MainActivity` is the sma
 
 `LauncherRepository` queries launchable apps only when Add opens. Normal sidebar opening attaches the existing panel; it does not rebind the grid, scan packages, or read shelf files. Icon work can finish while the panel is hidden. Selected icons render off the main thread at display size into an 8MiB byte-weighted cache. Package broadcasts invalidate only selected targets. App launch uses the package's launcher intent, including WebAPK packages. Missing apps stay in the shelf with a placeholder and a tap message. No notification listener, polling, alarms, or broad package query is used.
 
-`RuntimeState` records durable user enablement and a boot marker. Stop saves false before removing the service. Same-boot recovery can use the retained legacy-named accessibility component, which does not retrieve window content or act on events. A new boot requires legacy `auto_start` (default true) and enabled state. The manager exposes a Retry button when enabled but the service is absent. A successful overlay creation records the current boot marker so subsequent same-boot process recovery is possible. The old `toggle_sidebar` shortcut is disabled once because its target activity was removed. Accessibility retention and OxygenOS Clear-All remain subject to real-phone verification.
+`RuntimeState` records durable user enablement and a boot marker. Stop saves false before removing the service. Same-boot recovery can use the retained legacy-named accessibility component, which does not retrieve window content or act on events. A new boot requires legacy `auto_start` (default true) and enabled state. The manager exposes a Retry button when enabled but the service is absent. A successful overlay creation records the current boot marker so subsequent same-boot process recovery is possible. The old `toggle_sidebar` shortcut is disabled once because its target activity was removed. Accessibility retention was observed during the actual in-place update. The complete OxygenOS Clear-All/reboot matrix remains open in issue #10.
 
 ## Shelf migration and recovery
 
@@ -14,7 +14,7 @@ One Android module uses Kotlin Views and RecyclerView. `MainActivity` is the sma
 
 The minimal store uses `AtomicFile` for current and last-known-good copies. The good copy is written before the first primary write. Later edits save the prior validated snapshot as good before replacing current. Pending AtomicFile `.bak` files count as recoverable state; migration never reseeds over damaged minimal data. File operations and edits share one serialized worker. Editor callbacks ignore destroyed or superseded activities. The legacy preference file is never rewritten by the minimal implementation. Local copies do not survive uninstall or data wipe.
 
-Rollback requires a previous code build with a higher versionCode and the same signing certificate; a lower versionCode cannot normally replace 0.2.0 in place. The version 1 preferences remain for that path. Back up device data before changing installed builds.
+Rollback requires a previous code build with a higher versionCode and the same signing certificate; the existing recovery code9 cannot normally replace installed 0.2.1/code10 in place. The version 1 preferences remain for that path. Back up device data before changing installed builds.
 
 ## Removed capabilities
 
@@ -26,4 +26,6 @@ Run `testDebugUnitTest assembleDebug assembleRelease assembleDebugAndroidTest li
 
 Current lint warnings are triaged as retained target 34 compatibility, inherited launcher icon assets, intentional fixed right edge, code-only custom view construction, and full RecyclerView refresh on actual shelf replacement. No error category is suppressed.
 
-Before release, verify the installed APK signing certificate and same-certificate upgrade on the OnePlus. On that phone, validate every existing app and WebAPK target, IDs/labels/order, 100 rapid open/close cycles, 20 edits, outside tap/Back, rotation, IME/font scaling, overlay revocation, process death, Clear-All, reboot with auto-start on/off, Stop persistence, and lack of duplicate overlays. Measure performance against the private baseline under matched conditions. These physical gates and signature match are pending until the phone is attached; emulator checks cannot establish OxygenOS behavior.
+Owner delivery on 25 September: matching installed/candidate certificate verified, in-place 0.1.6/code7 -> 0.2.0/code8 -> 0.2.1/code10 installed, four sections/18 targets preserved, Accessibility and overlay retained, foreground runtime active. Actual opening and outside-close were inspected; after the close-flicker fix the owner responded "ok" and authorized closeout. The installed artifact is debug-signed with the original certificate, not a signed R8 release.
+
+Issue #10 retains unfinished qualification: every target launch, the complete rapid-cycle/edit/Back/rotation/IME/font/revocation/recovery/Clear-All/reboot matrix on OnePlus, signed R8 delivery and new recovery artifact compatible with code10. Measure frame timing, memory and battery under matched conditions. Tests on emulators and source/APK-size reductions are not substitutes for those measurements. No further phone action was required for this documentation closeout.

@@ -1,3 +1,5 @@
+> Historical pre-minimal document. Current scope and installed state: [SideFlow minimal delivery](../DELIVERY_20260925.md). Do not resume the old feature roadmap or review gates from this file.
+
 # Historical roadmap — superseded by SideFlow Minimal 0.2.0
 
 This document is retained for history. The active product and verification contract is [SIDEFLOW_MINIMAL.md](../SIDEFLOW_MINIMAL.md).
