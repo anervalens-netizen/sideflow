@@ -1,3 +1,9 @@
+> Historical pre-minimal document. Current scope and installed state: [SideFlow minimal delivery](../DELIVERY_20260925.md). Do not resume the old feature roadmap or review gates from this file.
+
+# Historical roadmap — superseded by SideFlow Minimal 0.2.0
+
+This document is retained for history. The active product and verification contract is [SIDEFLOW_MINIMAL.md](../SIDEFLOW_MINIMAL.md).
+
 # SideFlow v1 Plan
 
 Status: Active
@@ -26,6 +32,31 @@ The v1 panel is intentionally simple:
 - import/export with a versioned schema.
 
 The intended organization supports a small number of practical sections such as “My Apps”, “Daily”, and “Chats”, without hard-coding any owner-specific apps or links.
+
+## Current execution status — 2026-09-22
+
+- P0 bootstrap: merged.
+- P1 core launcher/grid: merged; physical OnePlus validation remains pending.
+- P2 sectioned shelf: merged.
+- P3 fast shortcuts/share target: merged.
+- P4 appearance: code-complete locally on `feat/sideflow-p4-appearance-presets`; R0 cleared on `bdb931ee`; final exact-head review pending, not merged.
+- P5 backup/portability: not started as a phase.
+- P6 device/release validation: pending Android Remote Control MCP / physical device access.
+- **Mandatory Codex review remediation gate R0 is CLEARED:** reviewed head `bdb931ee` had zero unresolved threads, exact-head CI `35760943007` green, and the fresh Codex review reported no major issues. The final P4 code batch still requires its own exact-head review before merge.
+
+## Mandatory gate R0 — Codex Connector remediation
+
+Before P4 can merge:
+
+1. Resolve every applicable finding in `docs/reviews/CODEX_REVIEW_REMEDIATION_20260922.md`.
+2. Prioritize P1 privacy/data-loss findings, then P2 correctness.
+3. Add focused regression tests where the behavior is pure/model-driven.
+4. Run `testDebugUnitTest assembleDebug`.
+5. Request a fresh Codex Connector review on the remediation PR.
+6. Reconcile every new actionable finding before merge.
+7. Update GitHub Issue #1 and ContextKeep with evidence.
+
+This gate exists because green CI alone did not catch several valid cross-feature/privacy regressions in P0–P3.
 
 ## Phase P0 — Bootstrap / ownership
 
@@ -101,9 +132,9 @@ The intended organization supports a small number of practical sections such as 
 - Subtle section cards and optional section titles.
 
 ### Definition of done
-- Presets render coherently in light/dark modes.
-- Custom values survive restart.
-- Appearance changes do not materially regress panel-open latency or scrolling.
+- Presets render coherently in light/dark modes. **Code/review complete on `9c887343`; device visual validation pending.**
+- Custom values survive restart. **Implemented via persistent preferences/import sanitization.**
+- Appearance changes do not materially regress panel-open latency or scrolling. **Hot-path contrast reads were reduced and section cards use a RecyclerView decoration rather than nested lists; exact-head code review/CI are clean, device validation pending.**
 
 ## Phase P5 — Backup / portability
 

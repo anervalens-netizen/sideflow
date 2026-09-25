@@ -1,0 +1,385 @@
+> Historical pre-minimal document. Current scope and installed state: [SideFlow minimal delivery](../DELIVERY_20260925.md). Do not resume the old feature roadmap or review gates from this file.
+
+# Codex Connector Review Remediation — 2026-09-22
+
+Status: **THIRD REVIEW ROUND PENDING — round-2 findings remediated locally; fresh Codex review required before R0 closes**
+Canonical tracker: GitHub Issue #1  
+Reviewed PRs: #2, #3, #4, #5  
+Source: `chatgpt-codex-connector[bot]` GitHub reviews/comments.
+
+## Why this exists
+
+The earlier implementation merged P0–P3 before all Codex Connector review comments had been reconciled. This document is the canonical reconciliation record. No later phase may be declared complete merely because CI is green; every applicable Codex finding below must be either fixed with evidence or explicitly documented as not applicable/superseded.
+
+As of 2026-09-22, **31 Codex findings were inspected** across the historical PRs and two PR #6 review rounds. All are now remediated locally on feat/sideflow-p4-appearance-presets, but the R0 gate remains open until a fresh review of the new exact HEAD and exact-head CI are both clean.
+
+## PR #2 — bootstrap/rebrand
+
+| ID | Severity | Finding | Current assessment | Required action |
+| --- | --- | --- | --- | --- |
+| r4069196518 | P2 | Migrate legacy `smartedge.*` pseudo-item IDs when importing old backups | **RESOLVED (local)** | Translate legacy shortcut/folder/tool IDs to `sideflow.*` during import/migration and test it. |
+| r4069196526 | P1 | Inherited donation/payment accounts remain under SideFlow branding | **RESOLVED (local)** | Remove the inherited payment destinations from SideFlow or clearly separate them as upstream-only. Preferred owner-app action: remove donation UI entirely and keep upstream attribution only. |
+| r4069196529 | P2 | In-app repository action still pointed upstream | **RESOLVED** | Current `SettingsMainActivity.openGithub()` opens `anervalens-netizen/sideflow`. Keep upstream attribution separately. |
+| review 5275031311 | P2 | Generated `sideflow_backup_<timestamp>.json` is not ignored | **RESOLVED (local)** | Add `sideflow_backup_*.json` / equivalent generated export pattern to `.gitignore`. |
+
+## PR #3 — launcher/grid
+
+| ID | Severity | Finding | Current assessment | Required action |
+| --- | --- | --- | --- | --- |
+| r4069338335 | P2 | Narrow panel + many columns can make icons overlap/clip | **RESOLVED (local)** | Fit icon size to actual cell width or derive/enforce a width/columns minimum; add pure layout-policy tests. |
+| r4069338343 | P2 | Center-drop freeform ignores configured freeform size mode | **RESOLVED (local)** | Reuse the existing Standard/Portrait/Maximized/Custom bounds policy in the center-drop path. |
+| r4069338350 | P2 | Center-drop freeform is not gated on platform freeform availability | **RESOLVED (local)** | Use `isFreeformEnabled()`/policy and degrade to fullscreen when unavailable. |
+| r4069338356 | P2 | Imported panel width can violate slider step (e.g. 185dp) | **RESOLVED (local)** | Quantize stored/imported width to the 10dp slider step or make slider continuous; add tests. |
+| r4069338375 | P2 | Fullscreen launch in `SplitScreenHelper` sits outside error handling | **RESOLVED (local)** | Put fullscreen `startActivity` inside guarded/fallback launch handling. |
+
+## PR #4 — sectioned shelf
+
+| ID | Severity | Finding | Current assessment | Required action |
+| --- | --- | --- | --- | --- |
+| r4070244969 | P1 | Empty configured shelf is treated as uninitialized and overwritten with top apps | **RESOLVED (local)** | Seed default apps only if the shelf config has never existed; preserve intentionally empty sections/config. |
+| r4070244975 | P2 | Downward drop on a later section header is off by one after source removal | **RESOLVED (local)** | Recompute/adjust target after source removal and add ordering regression test. |
+| r4070244980 | P2 | Nested folders lose resolvable child identity | **RESOLVED (local)** | Make folder lookup recursive and preserve nested folder item IDs during resolution. |
+| r4070244988 | P2 | Section headers collapse to height 0 in compact/edit mode, breaking empty-section drops | **RESOLVED (local)** | Keep a visible/nonzero drop zone while editing even when title text is hidden. |
+| r4070244994 | P2 | Imported shelf can contain duplicate nonblank item IDs | **RESOLVED (local)** | Enforce globally unique IDs during normalization; deterministically regenerate collisions and test move/remove semantics. |
+| r4070245000 | P2 | Legacy migration ignores previous global column count | **RESOLVED (local)** | Seed migrated first section from saved `panelColumns`, not hard-coded default. |
+| r4070245009 | P2 | Appearance “Panel Columns” control no longer affects persisted per-section columns | **RESOLVED (local)** | Retarget it as a bulk “all sections” action or remove/hide it; per-section editor stays authoritative. |
+
+## PR #5 — shortcuts/privacy
+
+| ID | Severity | Finding | Current assessment | Required action |
+| --- | --- | --- | --- | --- |
+| r4070389396 | P2 | Shortcut section/icon selection is lost on Activity recreation | **RESOLVED (local)** | Save/restore pending selection in `savedInstanceState`; test pure state where practical. |
+| r4070389408 | P2 | URI normalization strips valid trailing URI characters | **RESOLVED (local)** | Stop mutating manually entered valid URIs; trim punctuation only in shared-text extraction using context-aware rules. Include Wikipedia-parenthesis regression. |
+| r4070389414 | P2 | Export does not warn that shortcut targets are written to plaintext Downloads | **RESOLVED (local)** | Add explicit confirmation/warning before export when shelf contains URL/deep-link targets. |
+| r4070389421 | P1 | Android Auto Backup can upload private shortcut targets | **RESOLVED (local)** | Disable app Auto Backup or explicitly exclude the preference storage containing shelf targets. For this owner-first app, `allowBackup=false` is the simplest acceptable policy unless P5 replaces it with a scoped rule. |
+| r4070389428 | P2 | Drag-to-split for URL/deep-link loses the actual target and may launch icon-source app | **RESOLVED (local)** | Preserve the full shortcut intent through drag, or disable split/freeform drag for items with `intentUri`. Preferred v1: restrict drag-windowing to plain APP items. |
+
+
+## R0 local remediation evidence — 2026-09-22
+
+The fixes below are implemented on the P4 branch but **do not authorize merge**. Fresh Codex Connector review remains mandatory.
+
+| Finding(s) | Evidence |
+| --- | --- |
+| r4069196518 | ShelfConfigOps migrates legacy smartedge folder/tool/shortcut IDs; legacy migration preserves saved global columns; regression in ShelfConfigTest. |
+| r4069196526 | SideFlow payment/donation UI and inherited destination-bearing SupportActivity/layout removed; unused legacy settings donation layout removed; upstream attribution/license left intact. |
+| review 5275031311 | Git ignore now covers generated SideFlow backup JSON files. |
+| r4069338335 | SideFlowPolicy fits icons to actual panel/column cell width; regression covers 180dp / 6-column case. |
+| r4069338343, r4069338350 | All freeform launch paths share one bounds policy; center-drop requires actual freeform availability and otherwise falls back fullscreen. |
+| r4069338356 | Panel width sanitization now clamps and quantizes to the 10dp slider step; regression covers off-step imports. |
+| r4069338375 | SplitScreenHelper routes fullscreen and windowed failures through guarded launch/fallback logic. |
+| r4070244969 | Shelf configuration presence is distinct from emptiness; plain reads no longer persist a fresh empty shelf before initial seeding. |
+| r4070244975 | Header-drop insertion accounts for source removal; upward/downward regression added. |
+| r4070244980 | Shelf item lookup is recursive and nested folder children retain stable persisted IDs during resolution. |
+| r4070244988 | Hidden-title section headers retain a visible/nonzero edit-mode drop zone. |
+| r4070244994 | Normalization enforces globally unique, nonblank deterministic item IDs including nested children; idempotence/uniqueness regression added. |
+| r4070245000 | Legacy first section inherits saved panel column count. |
+| r4070245009 | Appearance control is now All section columns and updates every persisted section. |
+| r4070389396 | Shortcut editor saves/restores pending item, section, icon-source, and autofill state across Activity recreation. |
+| r4070389408 | Manual URI normalization no longer strips valid trailing URI characters; shared-text cleanup balances delimiters; Wikipedia-parenthesis regression added. |
+| r4070389414 | Export with URL/deep-link targets now requires explicit plaintext Downloads disclosure/confirmation. |
+| r4070389421 | Android Auto Backup is disabled for the app, preventing backup of private shortcut preferences. |
+| r4070389428 | Windowing drag is restricted to plain app entries without structured intent targets. |
+
+### Local validation
+
+- Forced unit-test run: **42/42 tests PASS**.
+- Debug APK assembly: **PASS**.
+- Git diff whitespace check: **PASS**.
+- Project-wide lint remains historically non-clean; the touched-code API-level finding in SplitScreenHelper was guarded after the first lint pass. Existing unrelated manifest/translations/layout/service lint debt is outside R0.
+
+## PR #6 — fresh R0/P4 review round 1
+
+Fresh Codex review of c6350c66 completed on 2026-09-22 and produced five new actionable findings. All five are remediated locally in the next commit; none authorizes P4 merge until a subsequent Codex review is clean.
+
+| ID | Severity | Finding | Current assessment | Remediation evidence |
+| --- | --- | --- | --- | --- |
+| r4070841420 | P2 | Reset All Settings can leave the shelf empty instead of restoring default apps | **RESOLVED (local)** | Reset now removes both shelf-presence keys and both reset entry points (SettingsMainActivity and legacy SettingsActivity) explicitly reseed AppRepository.getTop5Apps() before refresh. |
+| r4070841425 | P2 | Narrow rich-item grid fitting ignores RecyclerView/inner horizontal padding | **RESOLVED (local)** | Fitting now uses usable grid width after 16dp RecyclerView margins and accepts layout-specific inner padding; rich 180dp/6-column regression added. |
+| r4070841433 | P2 | Material You resolves static theme attributes instead of dynamic wallpaper colors | **RESOLVED (local)** | Material surface/accent resolution now uses DynamicColors.wrapContextIfAvailable(appContext) before resolving Material attributes, including service-side preference reads. |
+| r4070841436 | P2 | Reset-radius mutates appearance while leaving named preset active | **RESOLVED (local)** | Radius reset now calls markCustomPreset() before changing the value. |
+| r4070841439 | P1 | AMOLED stores blur 0 below Slider minimum 5 and can crash Appearance | **RESOLVED (local)** | AMOLED keeps blur disabled but stores the valid inactive minimum (5); blur persistence/readback is clamped to 5–50; regression added. |
+
+### PR #6 round-1 local validation
+
+- Gradle testDebugUnitTest + assembleDebug with server Android SDK: **PASS**.
+- Unit tests: **44/44 PASS**.
+- git diff --check: **PASS**.
+- P4 remains draft/WIP; another Codex review is mandatory on the new exact HEAD.
+
+## P4 adversarial hardening before review round 2
+
+A focused static pass over the appearance implementation found three adjacent defects before Codex could report them on the next head. They are fixed in the same R0/P4 branch and must be included in the next exact-head review.
+
+| Area | Finding | Remediation evidence |
+| --- | --- | --- |
+| Panel opacity | The Appearance “Panel Opacity” preference changed the edge handle but was not applied to the panel/picker background, so the advertised P4 custom opacity control was ineffective for the panel itself. | Resolved background colors now apply the persisted opacity multiplier; named presets set deterministic opacity values. |
+| Appearance import bounds | Imported opacity, radius, icon scale and max-height values could lie outside Material Slider ranges, creating the same class of reopen crash as the AMOLED blur finding. | Getters/setters/import now sanitize every Appearance slider-bound value: opacity, blur, radius, width, gap, icon scale, panel max height and picker max height. |
+| Reset Blur | Appearance exposed a Reset Blur control but the activity had no click handler. | Reset Blur now restores 15, marks a named preset Custom and refreshes the panel. Opacity edits/resets likewise mark named presets Custom because opacity is preset-defined. |
+
+### P4 hardening validation
+
+- Gradle testDebugUnitTest + assembleDebug: **PASS**.
+- Unit tests: **46/46 PASS**.
+- git diff --check: **PASS**.
+- A new Codex review is required on the resulting exact HEAD before R0 can close.
+
+## PR #6 — fresh R0/P4 review round 2
+
+Codex reviewed c68ab48 and completed on 2026-09-22 with five additional P2 findings. All five are remediated locally in the next commit; round 3 review remains mandatory.
+
+| ID | Severity | Finding | Current assessment | Remediation evidence |
+| --- | --- | --- | --- | --- |
+| r4071088694 | P2 | Legacy appearance imports can leave a stale named preset active | **RESOLVED (local)** | Imports without an appearance-preset key now mark appearance Custom when legacy appearance fields are present; pure policy regression added. |
+| r4071088700 | P2 | Hidden-background mode derives dark content from an invisible light surface | **RESOLVED (local)** | Hidden background now has an explicit light-content policy; app labels/pseudo icons plus panel buttons/tool text are retinted consistently and stale clipping is cleared. |
+| r4071088705 | P2 | Named preset -> Custom transition loses the preset surface color | **RESOLVED (local)** | Transition materializes the current effective preset base surface (including Material You dynamic surface) into the stored custom color before switching the marker to Custom; custom rendering uses the stored surface. |
+| r4071088714 | P2 | Back from a nested folder jumps to root instead of parent | **RESOLVED (local)** | SidePanelView now reports the remaining parent folder ID after stack pop; FloatingPanelService refreshes that parent instead of unconditionally clearing currentFolderId. |
+| r4071088717 | P2 | Unselected picker edit icons stay near-white on Frosted Light | **RESOLVED (local)** | PickerAdapter centralizes inactive edit-icon tint and uses a dark slate tint in light mode across full bind, payload bind and toggle paths. |
+
+### PR #6 round-2 local validation
+
+- Forced unit test execution after fixes: **47/47 PASS**.
+- Gradle testDebugUnitTest + assembleDebug: **PASS**.
+- git diff --check: **PASS**.
+- A new exact-head Codex review is required; P4 remains draft/unmerged.
+
+## PR #6 — fresh R0/P4 review round 3
+
+Codex reviewed 9c36fad and published five additional P2 findings. All five are remediated locally in the next commit; a clean exact-head review remains mandatory before R0 can close.
+
+| ID | Severity | Finding | Current assessment | Remediation evidence |
+| --- | --- | --- | --- | --- |
+| r4071312972 | P2 | Imported/persisted icon scale can be in-range but off the Slider 0.1 step | **RESOLVED (local)** | Icon scale sanitizer now clamps and quantizes to 0.1; regressions cover 1.04 -> 1.0 and 1.05 -> 1.1. |
+| r4071312991 | P2 | Explicitly selecting Custom from Material You bypasses color preservation | **RESOLVED (local)** | applyAppearancePreset(Custom) now routes through the preservation helper; the helper materializes both effective surface and effective accent before switching the preset marker. |
+| r4071313004 | P2 | Reset can clear shelf before lifecycle-scoped default-app query completes | **RESOLVED (local)** | Both reset entry points now query default apps first, then synchronously reset and seed with no suspension point between those mutations. Cancellation before the query completes leaves existing settings intact. |
+| r4071313012 | P2 | Legacy smartedge/sideflow tools-folder alias opens as an empty persisted folder | **RESOLVED (local)** | Both smartedge.folder.tools and old sideflow.folder.tools normalize to sideflow.tool.tools as SYSTEM_ACTION, routing through the synthetic built-in Tools behavior; flat and structured migration regressions cover it. |
+| r4071313019 | P2 | Nested-folder children appear draggable although their order cannot persist | **RESOLVED (local)** | Stable child IDs remain for recursive navigation, but reorder policy rejects items whose sectionId is folder:* until recursive order persistence exists; pure policy regression added. |
+
+### PR #6 round-3 local validation
+
+- Gradle testDebugUnitTest + assembleDebug: **PASS**.
+- Unit tests: **49/49 PASS**.
+- git diff --check: **PASS**.
+- P4 remains draft/unmerged; another Codex review is required on the resulting exact HEAD.
+
+## PR #6 — fresh R0/P4 review round 4
+
+Codex reviewed 71b84f49 and completed with three additional P2 findings. All three are remediated locally in the next commit; another exact-head review is mandatory.
+
+| ID | Severity | Finding | Current assessment | Remediation evidence |
+| --- | --- | --- | --- | --- |
+| r4071607776 | P2 | Material You resolves a dynamic accent but picker controls still use fixed colors | **RESOLVED (local)** | Picker edit/selection/type-toggle accent resolution now consumes resolvedPanelAccentColor() for Material You (and custom accent) instead of fixed hex tints. |
+| r4071607783 | P2 | Light but highly translucent panel chooses dark content despite unknown backdrop | **RESOLVED (local)** | Contrast policy now requires both a light surface and effective alpha >= 192 before choosing dark content; hidden/low-alpha surfaces use light content. Pure policy regression added. |
+| r4071607785 | P2 | Preset changing Rich -> Origin does not rebuild picker layout/holders | **RESOLVED (local)** | Picker tracks the applied layout theme; applyTheme() swaps layout manager, clears recycled holders, reattaches the adapter and recomputes height when the UI theme changes. |
+
+### PR #6 round-4 local validation
+
+- Gradle testDebugUnitTest + assembleDebug: **PASS**.
+- Unit tests: **50/50 PASS**.
+- git diff --check: **PASS**.
+- P4 remains draft/unmerged; another Codex review is required on the resulting exact HEAD.
+
+## PR #6 — fresh R0/P4 review round 5
+
+Codex reviewed b9f3eb2 and completed with one P1 and two P2 findings. All three are remediated locally in the next commit; another exact-head review is mandatory.
+
+| ID | Severity | Finding | Current assessment | Remediation evidence |
+| --- | --- | --- | --- | --- |
+| r4071774272 | P2 | Legacy-only empty reset marker suppresses default seeding after upgrade | **RESOLVED (local)** | Shelf-presence policy now treats an empty legacy-only panel-apps key as uninitialized while preserving intentional structured empty shelves; regression covers all combinations. |
+| r4071774280 | P1 | Picker adapters initialize before panelPrefs and can crash service startup | **RESOLVED (local)** | AppPickerPanelView initializes PanelPreferences and repository before constructing adapters, so adapter accent initialization cannot dereference an uninitialized preference field. |
+| r4071774283 | P2 | Realme renders a dark gradient but content tint can be derived from a light stored custom color | **RESOLVED (local)** | Central contrast policy now supports forced-dark rendered surfaces; Custom + Realme always chooses light content while preserving hidden/alpha rules for other themes. |
+
+### PR #6 round-5 local validation
+
+- Gradle testDebugUnitTest + assembleDebug: **PASS**.
+- Unit tests: **51/51 PASS**.
+- git diff --check: **PASS**.
+- P4 remains draft/unmerged; another Codex review is required on the resulting exact HEAD.
+
+## PR #6 — fresh R0/P4 review round 6
+
+Codex reviewed 5cf70ef9 and completed with two P2 findings. Both are remediated locally in the next commit; another exact-head review is mandatory.
+
+| ID | Severity | Finding | Current assessment | Remediation evidence |
+| --- | --- | --- | --- | --- |
+| r4072311449 | P2 | Side-panel holders keep Rich layouts after a preset switches the UI theme to Origin | **RESOLVED (local)** | SidePanelView tracks the applied item-layout theme and detaches/re-attaches the adapter while clearing the recycled pool whenever the theme changes, forcing holder reinflation. |
+| r4072311456 | P2 | Fixed 8dp pseudo-icon padding can consume the entire fitted icon at narrow 6-column Rich layouts | **RESOLVED (local)** | Pseudo-icon padding now scales with fitted icon size while reserving a minimum drawable area; regression covers 12dp, 40dp, 8dp and 6dp cases. |
+
+### PR #6 round-6 local validation
+
+- Gradle testDebugUnitTest + assembleDebug: **PASS**.
+- Unit tests: **52/52 PASS**.
+- git diff --check: **PASS**.
+- P4 remains draft/unmerged; another Codex review is required on the resulting exact HEAD.
+
+## PR #6 — fresh R0/P4 review round 7
+
+Codex reviewed 66674cad and completed with one P2 finding. It is remediated locally in the next commit; another exact-head review is mandatory.
+
+| ID | Severity | Finding | Current assessment | Remediation evidence |
+| --- | --- | --- | --- | --- |
+| r4072426697 | P2 | Panel Opacity scales a stored alpha, so 100% can still render at 90% and 50% at ~45% | **RESOLVED (local)** | Opacity is now the final rendered alpha and ignores any historical alpha embedded in the stored RGB color; regressions cover opaque, 0x80, 0x33 and legacy #E6 inputs at 10/50/100%. |
+
+### PR #6 round-7 local validation
+
+- Gradle testDebugUnitTest + assembleDebug: **PASS**.
+- Unit tests: **52/52 PASS**.
+- git diff --check: **PASS**.
+- P4 remains draft/unmerged; another Codex review is required on the resulting exact HEAD.
+
+## PR #6 — review round 8 (Codex + AI PR review)
+
+The review pass on 9b515f7 exposed one additional Codex P2 and three P2 findings from the repository AI PR review connector. All four are remediated locally in the next commit; fresh exact-head review remains mandatory before P4 merge.
+
+| ID | Source | Severity | Finding | Current assessment | Remediation evidence |
+| --- | --- | --- | --- | --- | --- |
+| r4072576974 | Codex | P2 | Picker derives contrast from side-panel Invisible Background state even though picker card remains visible | **RESOLVED (local)** | PanelPreferences now exposes picker-specific rendered-surface contrast that ignores side-panel hideBackground while preserving alpha/luminance/Realme rules; all picker contrast paths use it. |
+| r4072793683 | AI PR review | P2 | Folder child can be added again at root because membership/removal are top-level only | **RESOLVED (local)** | Panel membership/notification filtering now enumerate recursive shelf items; add/remove identity cleanup is recursive, preventing a nested item from coexisting as a duplicate root item. Regressions cover recursive membership, move-to-root uniqueness and recursive removal. |
+| r4072793691 | AI PR review | P2 | Shared standalone URLs lose valid trailing ! , or . characters | **RESOLVED (local)** | Shared-target extraction distinguishes standalone URI payloads from surrounding prose: standalone valid URI punctuation is preserved, while sentence punctuation is still trimmed from prose links. Regressions cover !, comma, period and prose punctuation. |
+| r4072793695 | AI PR review | P2 | Compact picker mode bypasses fitting and can overflow the 88dp collapsed panel | **RESOLVED (local)** | Icon fitting now uses actual available width (including widths below the user panel minimum), accepts one-column compact layout, and runs in compact mode too. Regressions cover 88dp normal/rich collapsed widths. |
+
+### Round-8 local validation
+
+- Gradle testDebugUnitTest + assembleDebug: **PASS**.
+- Unit tests: **57/57 PASS**.
+- git diff --check: **PASS**.
+- P4 remains draft/unmerged; fresh Codex/repository review is required on the resulting exact HEAD.
+
+## PR #6 — Codex review round 9
+
+Codex reviewed 9ffe91fd and completed with two additional P2 findings. Both are remediated locally in the next commit; fresh exact-head review remains mandatory.
+
+| ID | Severity | Finding | Current assessment | Remediation evidence |
+| --- | --- | --- | --- | --- |
+| r4074460003 | P2 | Question marks from shared prose can be captured as an empty-query suffix | **RESOLVED (local)** | Prose cleanup now treats `?` like the other sentence punctuation while standalone shared URIs preserve a legitimate trailing `?`; regression covers both cases. |
+| r4074460010 | P2 | Fixed picker controls stay translucent-white on light presets | **RESOLVED (local)** | Search icon, settings cog/background, notification heading, chevron, divider and edit-chip background now follow the same light/dark picker tint policy as text and rows. |
+
+### Round-9 local validation
+
+- Gradle testDebugUnitTest + assembleDebug: **PASS**.
+- Unit tests: **57/57 PASS**.
+- git diff --check: **PASS**.
+- P4 remains draft/unmerged; fresh Codex review is required on the resulting exact HEAD.
+
+## R0 closure evidence
+
+R0 is **PASS** on reviewed head `bdb931ee42b4d2909c4f4bd096c6de36b2cba07a`:
+
+- fresh Codex review: **clean / no major issues**;
+- unresolved PR #6 review threads: **0**;
+- exact-head CI `35760943007`: **SUCCESS**;
+- local validation at the reviewed head: **57/57 unit tests PASS** + `assembleDebug` PASS;
+- every published Codex finding and every published repository AI-review finding through round 9 was reconciled before closure.
+
+R0 closure does not authorize merging unfinished P4 work; it only clears the mandatory historical review-remediation gate.
+
+## P4 final completion batch after R0
+
+The final P4 code batch completes the remaining explicit appearance-plan item and reduces appearance work on scrolling/open hot paths:
+
+- **Subtle section cards:** a lightweight RecyclerView `ItemDecoration` draws rounded grouping surfaces behind visible user sections without nested RecyclerViews or extra per-item hierarchy. It is disabled for Invisible Background, compact picker mode, folders and synthetic sections.
+- **Optional section titles:** existing per-section title visibility remains intact and compatible with the card grouping.
+- **Hot-path hardening:** panel contrast is resolved once per app bind/theme pass instead of repeatedly for text/pseudo-icon/chip tinting; picker theme application likewise reuses one contrast decision.
+
+Local validation before final review: `57/57` unit tests PASS, `assembleDebug` PASS, `git diff --check` PASS. A fresh exact-head Codex review and CI run are still mandatory before active PR #7 can merge.
+
+## PR #7 — late review follow-up after R0 handoff
+
+PR #6 detached from the live branch after reviewed head `bdb931ee`; PR #7 is now the canonical final P4 review surface. Two Codex P2 findings were published late against the reviewed PR #6 head and still applied to the live P4 branch, so the review gate is reopened until PR #7 exact-head review is clean.
+
+| ID | Severity | Finding | Current assessment | Remediation evidence |
+| --- | --- | --- | --- | --- |
+| r4074696608 | P2 | Custom Realme gradient bypasses Panel Opacity by replacing the alpha-adjusted surface with fully opaque gradient stops | **RESOLVED (local)** | Both side panel and picker Realme gradient stops now use `SideFlowPolicy.applyOpacityToArgb(..., panelOpacity)`, preserving Panel Opacity as final rendered alpha. |
+| r4074696617 | P2 | Embedded prose URLs retain trailing `;` / `:` delimiters | **RESOLVED (local)** | Prose-only shared-target cleanup now includes semicolon and colon, while standalone URL payloads bypass punctuation trimming and preserve valid trailing `;`/`:`. Regressions cover both modes. |
+
+### PR #7 late-follow-up local validation
+
+- Gradle `testDebugUnitTest assembleDebug`: **PASS**.
+- Unit tests: **59/59 PASS**.
+- `git diff --check`: **PASS**.
+- PR #7 remains draft/unmerged; a fresh exact-head Codex review and CI are mandatory.
+
+## PR #7 — final P4 review round 2
+
+Fresh exact-head review of `d6cc64c3` produced three Codex P2 findings. The repository AI reviewer also reported one P2 on the preceding `b8172b2` head; that system-info tint issue is already resolved in `d6cc64c3` and remains fixed. All applicable findings are remediated locally in the next commit; another exact-head review is mandatory.
+
+| ID | Source | Severity | Finding | Current assessment | Remediation evidence |
+| --- | --- | --- | --- | --- | --- |
+| r4074883570 | Codex | P2 | Section-card decoration allocates maps/bounds/RectF and resolves theme color every draw frame | **RESOLVED (local)** | Decoration now reuses persistent per-section bounds, active-ID and RectF scratch state; enabled/color are cached and updated by SidePanelView only when UI state/theme changes, so Material You resolution is removed from the draw hot path. |
+| r4074883580 | Codex | P2 | Material You -> Custom preserves the dynamic accent in storage but picker falls back to fixed blue | **RESOLVED (local)** | Picker accent policy now routes both MATERIAL_YOU and CUSTOM through the resolved/stored accent path. Pure regression verifies Custom, Material You and explicit custom-accent behavior. |
+| r4074883591 | Codex | P2 | `loadCurrentSettings()` programmatic control synchronization triggers multiple ACTION_REFRESH passes | **RESOLVED (local)** | Slider listeners now handle only real user changes outside `syncingUi`; blur/hide/custom-accent switch listeners return during synchronization. Pure policy regression verifies programmatic/user slider cases. |
+| F-49251068d4 | AI PR review | P2 | Recursive tool tint dims RAM/Battery after their full-opacity color is assigned | **RESOLVED on `d6cc64c3`** | Full-opacity system-info colors are applied after recursive secondary-label tinting, exactly matching the reviewer remediation. |
+
+### PR #7 final-review-round-2 local validation
+
+- Gradle `testDebugUnitTest assembleDebug`: **PASS**.
+- Unit tests: **61/61 PASS**.
+- `git diff --check`: **PASS**.
+- PR #7 remains draft/unmerged; fresh Codex + repository AI exact-head review required.
+
+## PR #7 — final review round 3
+
+Fresh reviews of `03565c0` produced one repository AI-review P2 and one Codex P2. Both are remediated locally in the next commit; another exact-head review remains mandatory before merge.
+
+| ID | Source | Severity | Finding | Current assessment | Remediation evidence |
+| --- | --- | --- | --- | --- | --- |
+| r4075026285 / F-e3b3c616ce | AI PR review | P2 | Section-card bounds cache retains deleted section IDs indefinitely | **RESOLVED (local)** | `SectionCardDecoration` clears its cache when disabled/empty and evicts every entry not touched in the current draw frame, bounding retained state to currently visible sections. |
+| r4075047400 | Codex | P2 | Named presets force Origin theme and therefore block accent selection even when Custom Accent override is enabled | **RESOLVED (local)** | Accent-edit policy now allows the picker whenever `Use Custom Accent` is enabled, including named presets on Origin; Origin remains locked only without the explicit override. Regression covers Origin locked/unlocked and non-Origin behavior. |
+
+### PR #7 final-round-3 local validation
+
+- Gradle `testDebugUnitTest assembleDebug`: **PASS**.
+- Unit tests: **62/62 PASS**.
+- `git diff --check`: **PASS**.
+- PR #7 remains draft/unmerged; fresh exact-head Codex + repository AI review and CI are mandatory.
+
+## PR #7 — final review round 4
+
+Codex reviewed `dac9bbb2` and produced one additional P2. It is remediated locally in the next commit; another exact-head review remains mandatory.
+
+| ID | Severity | Finding | Current assessment | Remediation evidence |
+| --- | --- | --- | --- | --- |
+| r4075746280 | P2 | Named non-Material preset -> Custom transition stores a stale preference accent instead of the fixed accent actually rendered by the preset | **RESOLVED (local)** | Picker accent resolution is now centralized in PanelPreferences. Named presets without an explicit custom accent use the same fixed light/dark fallback for rendering and for Named -> Custom materialization; Material You/custom overrides still use the resolved dynamic/stored accent. Regression covers the fallback values and non-Material preset policy. |
+
+### PR #7 final-round-4 local validation
+
+- Gradle `testDebugUnitTest assembleDebug`: **PASS**.
+- Unit tests: **63/63 PASS**.
+- `git diff --check`: **PASS**.
+- PR #7 remains draft/unmerged; fresh exact-head Codex + repository AI review and CI are mandatory.
+
+## PR #7 — P4 code-review closure
+
+P4 implementation is **code/review complete** on reviewed code head `9c887343b15f369ed188f355841cc3616ff4c2d2`; physical OnePlus/OxygenOS validation remains intentionally deferred.
+
+Evidence on the exact code head:
+
+- local `testDebugUnitTest assembleDebug`: **PASS**, **63/63** unit tests;
+- `git diff --check`: **PASS**;
+- GitHub CI `35776141847`: **SUCCESS**;
+- Codex Connector review: **Completed / no major issues** on `9c887343`;
+- repository AI PR review: **No actionable P0/P1/P2 defects** on `9c887343`;
+- unresolved PR #7 review threads: **0**.
+
+PR #7 remains draft/unmerged per owner instruction. This closure covers code review only; device visual/runtime validation is still pending and belongs to the deferred Android/OxygenOS validation gate.
+
+## Mandatory remediation order
+
+1. **Privacy / misleading UI first:** PR #2 donation UI, backup filename ignore, PR #5 Auto Backup and export warning.
+2. **Data integrity:** empty shelf preservation, globally unique IDs, legacy ID/column migration.
+3. **Launch correctness:** freeform availability/size, fullscreen exception handling, shortcut drag semantics.
+4. **Edit correctness:** header drop index, nested folders, visible drop zones, Activity recreation.
+5. **Layout correctness:** width/columns/icon fitting and width quantization.
+6. **Control semantics:** fix/remove the disconnected global Panel Columns control.
+7. Re-run all unit tests + `assembleDebug`, create focused regression tests for every pure-policy/data-model fix.
+8. Open a remediation PR, trigger a fresh Codex Connector review, and do not merge until new findings are reconciled.
+9. Only then continue/merge P4 appearance work.
+
+## Definition of done for this review gate
+
+- Every row above is marked RESOLVED or NOT APPLICABLE with code/test evidence.
+- No P1/P2 Codex finding remains silently open.
+- Public-repo privacy boundary matches actual Android backup/export behavior.
+- Fresh PR Codex review has no unresolved actionable finding.
+- Exact-head CI passes.
+- GitHub Issue #1 and ContextKeep checkpoint are updated.

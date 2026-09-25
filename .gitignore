@@ -47,6 +47,7 @@ release-key.jks
 # Private/local SideFlow configuration and exports
 sideflow-export*.json
 sideflow-private*.json
+sideflow_backup_*.json
 *.private.json
 
 # Historical local metadata
