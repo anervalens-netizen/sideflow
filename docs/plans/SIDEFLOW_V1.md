@@ -1,3 +1,7 @@
+# Historical roadmap — superseded by SideFlow Minimal 0.2.0
+
+This document is retained for history. The active product and verification contract is [SIDEFLOW_MINIMAL.md](../SIDEFLOW_MINIMAL.md).
+
 # SideFlow v1 Plan
 
 Status: Active

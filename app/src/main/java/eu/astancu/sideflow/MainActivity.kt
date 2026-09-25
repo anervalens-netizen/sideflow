@@ -1,388 +1,245 @@
 package eu.astancu.sideflow
 
+import android.Manifest
+import android.app.AlertDialog
 import android.content.Intent
-import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.view.View
-import android.view.View.GONE
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.Gravity
+import android.view.ViewGroup
+import android.widget.ArrayAdapter
+import android.widget.Button
+import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.ListView
+import android.widget.ScrollView
 import android.widget.TextView
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
-import com.bumptech.glide.Glide
-import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.bumptech.glide.request.RequestOptions
-import com.google.android.material.snackbar.Snackbar
-import eu.astancu.sideflow.databinding.ActivityMainM3Binding
+import android.app.Activity
+import java.util.concurrent.Executors
 
-class MainActivity : AppCompatActivity(), android.content.SharedPreferences.OnSharedPreferenceChangeListener {
-
-    private lateinit var binding: ActivityMainM3Binding
-    private lateinit var panelPrefs: PanelPreferences
-
-    override fun attachBaseContext(newBase: android.content.Context) {
-        super.attachBaseContext(LocaleHelper.onAttach(newBase))
-    }
-
-    private val overlayPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) {
-        updatePermissionUI()
-        updateServiceStatus()
-    }
+class MainActivity : Activity() {
+    private val catalogWorker = Executors.newSingleThreadExecutor()
+    private lateinit var root: LinearLayout
+    private var shelf: Shelf? = null
+    private var loadError: String? = null
+    private var recoveryMessage: String? = null
+    private var catalogDialog: AlertDialog? = null
+    private var alive = true
+    private var request = 0
+    private val runtimeObserver: () -> Unit = { if (alive && ::root.isInitialized) render() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        android.util.Log.d("MainActivity", "Current Locale: ${java.util.Locale.getDefault().language}")
-        binding = eu.astancu.sideflow.databinding.ActivityMainM3Binding.inflate(layoutInflater)
-
-        setContentView(binding.root)
-
-        // Hide default action bar
-        supportActionBar?.hide()
-
-
-
-        panelPrefs = PanelPreferences(this)
-
-        if (!panelPrefs.setupCompleted) {
-            startActivity(Intent(this, SetupActivity::class.java))
-            finish()
-            return
+        root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(16), dp(16), dp(16), dp(16))
         }
-
-        setupListeners()
-        registerPinnedShortcut()
-    }
-
-    private fun registerPinnedShortcut() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val shortcutManager = getSystemService(android.content.pm.ShortcutManager::class.java)
-            
-            val toggleIntent = Intent(this, ToggleActivity::class.java).apply {
-                action = ToggleActivity.ACTION_TOGGLE
-            }
-
-            val shortcut = android.content.pm.ShortcutInfo.Builder(this, "toggle_sidebar")
-                .setShortLabel("Toggle Sidebar")
-                .setIcon(android.graphics.drawable.Icon.createWithResource(this, R.mipmap.ic_launcher))
-                .setIntent(toggleIntent)
-                .build()
-
-            try {
-                shortcutManager.dynamicShortcuts = listOf(shortcut)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-    }
-
-    private fun setupListeners() {
-        binding.btnGrantPermission.setOnClickListener { requestOverlayPermission() }
-        binding.btnIgnoreBattery.setOnClickListener { requestIgnoreBatteryOptimization() }
-        binding.btnFixFreeform.setOnClickListener {
-            val intent = Intent(this, InteractionSettingsActivity::class.java).apply {
-                putExtra(SettingsMainActivity.EXTRA_SCROLL_TO, "feature_freeform")
-            }
-            startActivity(intent)
-        }
-        
-        val toggleListener = View.OnClickListener { togglePanel() }
-        binding.btnStartStop.setOnClickListener(toggleListener)
-        binding.btnStartStopClassic.setOnClickListener(toggleListener)
-
-        binding.btnTogglePanel.setOnClickListener { triggerPanelToggle() }
-        binding.btnSettings.setOnClickListener {
-            startActivity(Intent(this, SettingsMainActivity::class.java))
-        }
-        binding.btnShowLogs.setOnClickListener {
-            showLogsDialog()
-        }
-
-        binding.btnHowToUse.setOnClickListener {
-            val isVisible = binding.layoutTutorialContent.visibility == View.VISIBLE
-            if (isVisible) {
-                binding.layoutTutorialContent.visibility = View.GONE
-            } else {
-                binding.layoutTutorialContent.visibility = View.VISIBLE
-                binding.mainScrollView.post {
-                    binding.mainScrollView.fullScroll(View.FOCUS_DOWN)
-                }
-            }
-        }
-
-        // Load Tutorial Animation
-        Glide.with(this)
-            .asGif()
-            .load(R.drawable.tutorial_anim)
-            .apply(RequestOptions.diskCacheStrategyOf(DiskCacheStrategy.NONE))
-            .into(binding.ivTutorialAnim)
+        setContentView(ScrollView(this).apply { addView(root) })
+        render()
+        load()
     }
 
     override fun onResume() {
         super.onResume()
-        val prefs = getSharedPreferences("side_panel_prefs", android.content.Context.MODE_PRIVATE)
-        prefs.registerOnSharedPreferenceChangeListener(this)
-        
-        applyHomeButtonStyle()
-        updatePermissionUI()
-        updateServiceStatus()
+        (application as SideFlowApp).observeRuntime(runtimeObserver)
+        if (::root.isInitialized) render()
     }
 
     override fun onPause() {
+        (application as SideFlowApp).removeRuntimeObserver(runtimeObserver)
         super.onPause()
-        val prefs = getSharedPreferences("side_panel_prefs", android.content.Context.MODE_PRIVATE)
-        prefs.unregisterOnSharedPreferenceChangeListener(this)
     }
 
-    override fun onSharedPreferenceChanged(sharedPreferences: android.content.SharedPreferences?, key: String?) {
-        if (key == "service_enabled") {
+    private fun load() {
+        val current = ++request
+        ShelfRuntime.load(this) { result, recovery ->
+            if (!alive || current != request) return@load
+            recoveryMessage = recovery
+            result.fold(onSuccess = {
+                shelf = it
+                loadError = null
+            }, onFailure = {
+                loadError = it.message ?: getString(R.string.shelf_error)
+            })
+            render()
+        }
+    }
+
+    private fun render() {
+        root.removeAllViews()
+        heading(getString(R.string.app_name))
+        val state = RuntimeState(this)
+        val running = FloatingPanelService.isRunning
+        info(when {
+            running -> getString(R.string.sidebar_running)
+            state.enabled -> getString(R.string.sidebar_waiting)
+            else -> getString(R.string.sidebar_stopped)
+        })
+        state.error?.let(::info)
+        if (!Settings.canDrawOverlays(this)) button(getString(R.string.allow_overlay)) {
+            startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
+        }
+        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            button(getString(R.string.allow_notification)) {
+                requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
+            }
+        }
+        if (state.enabled) {
+            button(getString(R.string.stop_sidebar)) {
+                if (!ServiceControl.stop(this)) info(getString(R.string.stop_failed))
+                render()
+            }
+            if (!running) button(getString(R.string.retry_sidebar)) {
+                ServiceControl.start(this)
+                render()
+            }
+        } else button(getString(R.string.start_sidebar)) {
+            if (state.setEnabled(true)) ServiceControl.start(this)
+            render()
+        }
+        loadError?.let {
+            info(getString(R.string.shelf_needs_attention, it))
+            button(getString(R.string.retry_load)) { load() }
+            return
+        }
+        val current = shelf ?: run {
+            info(getString(R.string.loading_shelf))
+            return
+        }
+        recoveryMessage?.let(::info)
+        button(getString(R.string.add_app)) { chooseApp() }
+        current.sections.forEach { section ->
+            heading(section.title)
+            if (section.items.isEmpty()) info(getString(R.string.empty_section))
+            section.items.forEach { item ->
+                val name = item.label ?: item.reference.substringAfterLast('.')
+                val row = LinearLayout(this).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    gravity = Gravity.CENTER_VERTICAL
+                    minimumHeight = dp(48)
+                }
+                row.addView(TextView(this).apply {
+                    text = name
+                    textSize = 15f
+                }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+                row.addView(Button(this).apply {
+                    text = getString(R.string.remove)
+                    contentDescription = getString(R.string.remove_description, name, section.title)
+                    setOnClickListener { edit { it.remove(item.id) } }
+                })
+                root.addView(row)
+            }
+        }
+    }
+
+    private fun chooseApp() {
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(12), dp(8), dp(12), dp(8))
+        }
+        val search = EditText(this).apply {
+            hint = getString(R.string.search_apps)
+            setSingleLine(true)
+        }
+        val list = ListView(this)
+        box.addView(search)
+        box.addView(list, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(440)))
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(R.string.add_app)
+            .setView(box)
+            .setNegativeButton(android.R.string.cancel, null)
+            .create()
+        catalogDialog = dialog
+        dialog.show()
+        val current = mutableListOf<LauncherRepository.App>()
+        val adapter = ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, mutableListOf())
+        list.adapter = adapter
+        var discovered: List<LauncherRepository.App> = emptyList()
+
+        fun filter(query: String) {
+            current.clear()
+            current.addAll(discovered.filter {
+                it.label.contains(query, true) || it.packageName.contains(query, true)
+            })
+            adapter.clear()
+            adapter.addAll(current.map { "${it.label}\n${it.packageName}" })
+            adapter.notifyDataSetChanged()
+        }
+
+        search.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = filter(s?.toString().orEmpty())
+            override fun afterTextChanged(s: Editable?) = Unit
+        })
+        catalogWorker.execute {
+            val result = runCatching { LauncherRepository(applicationContext).list() }
             runOnUiThread {
-                updateServiceStatus()
+                if (!alive || !dialog.isShowing) return@runOnUiThread
+                result.fold(onSuccess = {
+                    discovered = it
+                    filter(search.text.toString())
+                    if (it.isEmpty()) search.error = getString(R.string.no_launchers)
+                }, onFailure = {
+                    search.error = getString(R.string.catalog_failed, it.javaClass.simpleName)
+                    dialog.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.retry_load)) { _, _ -> chooseApp() }
+                })
             }
         }
-    }
-
-    private fun applyHomeButtonStyle() {
-        val isPowerStyle = panelPrefs.homeButtonStyle == PanelPreferences.STYLE_POWER
-        binding.btnStartStop.visibility = if (isPowerStyle) View.VISIBLE else View.GONE
-        binding.btnStartStopClassic.visibility = if (isPowerStyle) GONE else View.VISIBLE
-    }
-
-    private fun updateServiceStatus() {
-        val isEnabled = panelPrefs.serviceEnabled
-        val isAccessibilityEnabled = isAccessibilityServiceEnabled()
-        val automationActive = panelPrefs.useAutomationForGestures && AutomationManager.isAutomationPossible()
-        
-        val typedValue = android.util.TypedValue()
-        
-        if (isEnabled && (isAccessibilityEnabled || automationActive)) {
-            // Service is fully ACTIVE (Green)
-            binding.btnStartStop.backgroundTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#2ECC71"))
-            binding.btnStartStop.setIconTintResource(android.R.color.white)
-            
-            binding.btnStartStopClassic.text = "Stop"
-            binding.btnStartStopClassic.backgroundTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#2ECC71"))
-            binding.btnStartStopClassic.setTextColor(Color.WHITE)
-
-            val statusSuffix = when {
-                automationActive && AutomationManager.isRootAvailable() -> " (Root)"
-                automationActive && AutomationManager.isShizukuAvailable() -> " (Shizuku)"
-                panelPrefs.useAutomationForGestures -> " (Service Stopped)"
-                else -> ""
-            }
-            binding.tvStatus.text = if (automationActive) "Active$statusSuffix" else if (panelPrefs.useAutomationForGestures) getString(R.string.status_automation_stopped) else getString(R.string.status_service_active)
-            theme.resolveAttribute(com.google.android.material.R.attr.colorOnSurface, typedValue, true)
-            binding.tvStatus.setTextColor(typedValue.data)
-            binding.statusDot.imageTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#2ECC71"))
-        } else if (isEnabled && !isAccessibilityEnabled) {
-            // Preference is ON, but Accessibility is MISSING (Yellow warning)
-            binding.btnStartStop.backgroundTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#F1C40F"))
-            binding.btnStartStop.setIconTintResource(android.R.color.white)
-            
-            binding.btnStartStopClassic.text = "Fix"
-            binding.btnStartStopClassic.backgroundTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#F1C40F"))
-            binding.btnStartStopClassic.setTextColor(Color.WHITE)
-
-            binding.tvStatus.text = "Accessibility Required"
-            binding.tvStatus.setTextColor(Color.parseColor("#F1C40F"))
-            binding.statusDot.imageTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#F1C40F"))
-        } else {
-            // Service is STOPPED (Slate)
-            binding.btnStartStop.backgroundTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#475569"))
-            binding.btnStartStop.setIconTintResource(com.google.android.material.R.color.material_dynamic_neutral90)
-            
-            binding.btnStartStopClassic.text = "Start"
-            binding.btnStartStopClassic.backgroundTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#475569"))
-            binding.btnStartStopClassic.setTextColor(Color.WHITE)
-
-            binding.tvStatus.text = "Service is Stopped"
-            theme.resolveAttribute(com.google.android.material.R.attr.colorOnSurfaceVariant, typedValue, true)
-            binding.tvStatus.setTextColor(typedValue.data)
-            binding.statusDot.imageTintList = android.content.res.ColorStateList.valueOf(typedValue.data)
-        }
-        
-        binding.btnStartStop.text = "" 
-    }
-
-    // ── Permission ────────────────────────────────────────────────────────────
-
-    private fun showLogsDialog() {
-        val sdf = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
-        val time = sdf.format(java.util.Date())
-        
-        val logBuilder = StringBuilder()
-        logBuilder.append("[$time] Log Session Started\n")
-        logBuilder.append("[$time] Device: ${android.os.Build.MODEL} (${android.os.Build.VERSION.RELEASE})\n")
-        logBuilder.append("[$time] Overlay: ${if (hasOverlayPermission()) "GRANTED" else "MISSING"}\n")
-        logBuilder.append("[$time] Accessibility: ${if (isAccessibilityServiceEnabled()) "ACTIVE" else "INACTIVE"}\n")
-        logBuilder.append("[$time] Service: ${if (FloatingPanelService.isRunning) "RUNNING" else "STOPPED"}\n")
-        logBuilder.append("[$time] Theme: ${panelPrefs.uiTheme.uppercase()}\n")
-        logBuilder.append("[$time] Status: FULL VERSION (Open Source)\n")
-        logBuilder.append("[$time] --- End of Summary ---")
-
-        val tv = TextView(this).apply {
-            text = logBuilder.toString()
-            setPadding(64, 32, 64, 32)
-            typeface = android.graphics.Typeface.MONOSPACE
-            textSize = 12f // 12f is the float for sp
-            setTextColor(Color.parseColor("#B3FFFFFF"))
-            layoutParams = android.view.ViewGroup.LayoutParams(
-                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-            )
-        }
-
-        val scroll = android.widget.ScrollView(this).apply {
-            addView(tv)
-        }
-
-        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-            .setTitle("System Activity Logs")
-            .setView(scroll)
-            .setPositiveButton("Close", null)
-            .show()
-    }
-
-    private fun hasOverlayPermission(): Boolean =
-        Settings.canDrawOverlays(this)
-
-    private fun requestOverlayPermission() {
-        val intent = Intent(
-            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-            Uri.parse("package:$packageName")
-        )
-        overlayPermissionLauncher.launch(intent)
-    }
-
-    private fun isIgnoringBatteryOptimizations(): Boolean {
-        val powerManager = getSystemService(POWER_SERVICE) as android.os.PowerManager
-        return powerManager.isIgnoringBatteryOptimizations(packageName)
-    }
-
-    private fun requestIgnoreBatteryOptimization() {
-        // First, attempt the standard Android way
-        try {
-            val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                data = Uri.parse("package:$packageName")
-            }
-            startActivity(intent)
-        } catch (e: Exception) {
-            // Fallback to general settings
-            try {
-                startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
-            } catch (e2: Exception) {}
-        }
-
-        // For OriginOS / Vivo / iQOO devices, the standard way often isn't enough.
-        // We provide a small delay and then attempt to open their specific "High Power Consumption" or "BgStartUp" manager.
-        val manufacturer = Build.MANUFACTURER.lowercase()
-        if (manufacturer.contains("vivo") || manufacturer.contains("iqoo")) {
-            binding.root.postDelayed({
-                openVivoSpecificSettings()
-            }, 1000)
+        list.setOnItemClickListener { _, _, index, _ ->
+            val selected = current.getOrNull(index) ?: return@setOnItemClickListener
+            dialog.dismiss()
+            val sections = shelf?.sections?.takeIf { it.isNotEmpty() } ?: Shelf.empty().sections
+            AlertDialog.Builder(this).setTitle(getString(R.string.section_for_app, selected.label))
+                .setItems(sections.map { it.title }.toTypedArray()) { _, which ->
+                    edit { it.add(sections[which].id, selected.packageName, selected.label) }
+                }.show()
         }
     }
 
-    private fun openVivoSpecificSettings() {
-        val intents = arrayOf(
-            Intent().apply { setClassName("com.vivo.abe", "com.vivo.abe.unifiedpower.HighPowerConsumptionActivity") },
-            Intent().apply { setClassName("com.vivo.permissionmanager", "com.vivo.permissionmanager.activity.BgStartUpManagerActivity") },
-            Intent().apply { setClassName("com.iqoo.secure", "com.iqoo.secure.ui.phoneoptimize.BgStartUpManager") },
-            Intent().apply { setClassName("com.vivo.abe", "com.vivo.abe.unifiedpower.UnifiedPowerActivity") }
-        )
-
-        for (intent in intents) {
-            try {
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                startActivity(intent)
-                return // Success
-            } catch (e: Exception) {
-                // Try next one
-            }
+    private fun edit(change: (Shelf) -> Shelf) {
+        val current = ++request
+        ShelfRuntime.update(this, change) { result ->
+            if (!alive || current != request) return@update
+            result.fold(onSuccess = {
+                shelf = it
+                loadError = null
+            }, onFailure = {
+                loadError = getString(R.string.edit_failed, it.message ?: it.javaClass.simpleName)
+            })
+            render()
         }
     }
 
-    private fun updatePermissionUI() {
-        val granted = hasOverlayPermission()
-        val standardBatteryIgnored = isIgnoringBatteryOptimizations()
-        
-        // Show/Hide Activity Logs button based on user preference
-        binding.btnShowLogs.visibility = if (panelPrefs.showLogs) View.VISIBLE else View.GONE
-
-        // For Vivo/iQOO, we want to keep the card visible until standard optimization is ignored,
-        // so the user can easily reach the deep-links. Once ignored, it disappears.
-        val batteryCardVisible = !standardBatteryIgnored
-
-        binding.cardPermission.visibility = if (granted) View.GONE else View.VISIBLE
-        binding.cardBatteryOptimization.visibility = if (batteryCardVisible) View.VISIBLE else View.GONE
-
-        val freeformMismatch = panelPrefs.freeformEnabled && !isFreeformEnabled()
-        binding.cardFreeformOptimization.visibility = if (freeformMismatch) View.VISIBLE else View.GONE
-        
-        binding.btnStartStop.isEnabled = granted
-        binding.btnStartStopClassic.isEnabled = granted
-
-        // Show Android 13 sideload note for users who can't find the permission toggle
-        if (!granted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            binding.tvSideloadNote.visibility = View.VISIBLE
-        }
+    private fun heading(value: String) {
+        root.addView(TextView(this).apply {
+            text = value
+            textSize = 20f
+            setPadding(0, dp(12), 0, dp(4))
+        })
     }
-
-    // ── Service Toggle ────────────────────────────────────────────────────────
-
-    private fun togglePanel() {
-        val activeBtn = if (panelPrefs.homeButtonStyle == PanelPreferences.STYLE_POWER) 
-            binding.btnStartStop else binding.btnStartStopClassic
-            
-        // Haptic feedback for tactile feel
-        activeBtn.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY)
-        
-        // Scale animation
-        SpringAnimator.scalePulse(activeBtn)
-
-        if (!hasOverlayPermission()) {
-            requestOverlayPermission()
-            return
-        }
-
-        val automationEnabled = panelPrefs.useAutomationForGestures && AutomationManager.isAutomationPossible()
-        if (!automationEnabled && !isAccessibilityServiceEnabled()) {
-            binding.root.showModernToast("Please enable 'SideFlow' in Accessibility Settings", com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
-            openAccessibilitySettings()
-            return
-        }
-
-        // Use centralized logic
-        panelPrefs.toggleService(this)
-        
-        // UI will be updated by the OnSharedPreferenceChangeListener
+    private fun info(value: String) {
+        root.addView(TextView(this).apply {
+            text = value
+            textSize = 14f
+            setPadding(0, dp(4), 0, dp(4))
+        })
     }
-
-    private fun triggerPanelToggle() {
-        if (!hasOverlayPermission()) {
-            requestOverlayPermission()
-            return
-        }
-        
-        val automationEnabled = panelPrefs.useAutomationForGestures && AutomationManager.isAutomationPossible()
-        if (!automationEnabled && !isAccessibilityServiceEnabled()) {
-            binding.root.showModernToast("Please enable 'SideFlow' in Accessibility Settings", Snackbar.LENGTH_LONG)
-            openAccessibilitySettings()
-            return
-        }
-        
-        binding.root.showModernToast("Opening Sidebar...")
-        val intent = Intent(this, FloatingPanelService::class.java).apply {
-            action = FloatingPanelService.ACTION_OPEN
-        }
-        
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(intent)
-        } else {
-            startService(intent)
-        }
+    private fun button(value: String, click: () -> Unit) {
+        root.addView(Button(this).apply {
+            text = value
+            setOnClickListener { click() }
+        })
+    }
+    private fun dp(value: Int) = SidebarStyle.dp(this, value)
+    override fun onDestroy() {
+        alive = false
+        request++
+        catalogDialog?.dismiss()
+        catalogWorker.shutdownNow()
+        super.onDestroy()
     }
 }

@@ -3,51 +3,17 @@ package eu.astancu.sideflow
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 
-/**
- * Listens for BOOT_COMPLETED and auto-starts FloatingPanelService
- * if the user has enabled "Auto-start on boot" in settings.
- */
 class BootReceiver : BroadcastReceiver() {
-
     override fun onReceive(context: Context, intent: Intent) {
-        val action = intent.action ?: return
-        if (action != Intent.ACTION_BOOT_COMPLETED &&
-            action != "android.intent.action.QUICKBOOT_POWERON") return
-
-        val prefs = PanelPreferences(context)
-        val bootCount = prefs.currentBootCount()
-        if (!SideFlowRecoveryPolicy.shouldRecoverForBoot(
-                prefs.autoStart,
-                FloatingPanelService.isRunning,
-                android.provider.Settings.canDrawOverlays(context),
-                bootCount,
-                prefs.lastRecoveryBootCount()
-            )) return
-        if (!isAccessibilityServiceEnabled(context)) return
-        if (FloatingPanelService.recoverIfDesired(context, enableIfStopped = true)) {
-            prefs.markRecoveryBootHandled(bootCount)
-        }
-    }
-
-    private fun isAccessibilityServiceEnabled(context: Context): Boolean {
-        if (PanelAccessibilityService.isRunning) return true
-        
-        val enabledServices = android.provider.Settings.Secure.getString(
-            context.contentResolver,
-            android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
-        ) ?: return false
-        
-        val colonSplitter = android.text.TextUtils.SimpleStringSplitter(':')
-        colonSplitter.setString(enabledServices)
-        
-        while (colonSplitter.hasNext()) {
-            val componentName = colonSplitter.next()
-            if (componentName.equals("${context.packageName}/${PanelAccessibilityService::class.java.name}", ignoreCase = true)) {
-                return true
+        val state = RuntimeState(context)
+        when (intent.action) {
+            Intent.ACTION_BOOT_COMPLETED -> {
+                if (state.recoverNewBoot()) ServiceControl.start(context)
+            }
+            Intent.ACTION_MY_PACKAGE_REPLACED -> {
+                if (state.enabled && (state.recoverSameBoot() || !state.hasKnownBoot)) ServiceControl.start(context)
             }
         }
-        return false
     }
 }

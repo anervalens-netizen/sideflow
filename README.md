@@ -1,45 +1,15 @@
-# SideFlow
+# SideFlow Minimal
 
-SideFlow is a personal-first Android edge shelf for fast access to apps, shortcuts and small groups of frequently used actions.
+SideFlow is a compact right-edge Android sidebar for launching installed apps from two-column sections. Tap its thin handle to open; tap an app to launch it. The launcher activity provides Start/Stop, overlay setup, and searchable Add/Remove. A persistent notification also has Stop.
 
-It is derived from [Smart Edge](https://github.com/Imtiaz-Official/Smart-Edge) by Imtiaz and keeps the original MIT license and project history. SideFlow has its own application ID, roadmap and release lifecycle.
+Version 0.2.0 (code 8) keeps application ID `eu.astancu.sideflow` for an in-place update. Existing section and shortcut IDs, labels, order, and package targets migrate on first load. Unsupported legacy shortcuts stop migration with a visible error. Legacy preferences remain available for rollback.
 
-## Direction
+Build with JDK 17 and Android SDK 34:
 
-SideFlow v1 focuses on:
+```bash
+./gradlew --no-daemon --max-workers=2 testDebugUnitTest assembleDebug assembleRelease assembleDebugAndroidTest lintDebug lintRelease
+```
 
-- normal full-screen app launching by default;
-- configurable compact grids;
-- grouped sections;
-- app, shortcut/deep-link, URL, folder and system-action items;
-- glass/AMOLED/Material You themes;
-- device-local personal configuration;
-- versioned import/export.
+Android instrumentation tests require a device or emulator. A release update requires the original signing certificate; local builds without signing properties produce an unsigned release APK. See [minimal architecture and migration](docs/SIDEFLOW_MINIMAL.md).
 
-The active implementation plan is in [docs/plans/SIDEFLOW_V1.md](docs/plans/SIDEFLOW_V1.md). GitHub Issue #1 is the canonical progress tracker.
-
-## Privacy boundary
-
-This repository is public. Personal configuration is not source-controlled. Conversation URLs, account data, owner-specific exports, screenshots containing private content, credentials and signing material must stay outside Git. See [docs/PUBLIC_REPO_PRIVACY.md](docs/PUBLIC_REPO_PRIVACY.md).
-
-## Build
-
-Requirements:
-
-- JDK 17+
-- Android SDK
-- Android API 34 SDK installed
-
-Debug/test build:
-
-    ./gradlew testDebugUnitTest assembleDebug
-
-Release signing is optional at configuration time. A release keystore is supplied externally through keystore.properties or CI secrets and is never committed.
-
-## Upstream
-
-Upstream: Smart Edge by Imtiaz
-
-License: MIT — see [LICENSE](LICENSE)
-
-SideFlow preserves the original copyright notice as required by the MIT license.
+SideFlow derives from [Smart Edge](https://github.com/Imtiaz-Official/Smart-Edge) by Imtiaz. The original and derivative work retain the [MIT license](LICENSE).

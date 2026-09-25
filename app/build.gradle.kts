@@ -14,8 +14,8 @@ android {
         applicationId = "eu.astancu.sideflow"
         minSdk = 26
         targetSdk = 34
-        versionCode = 7
-        versionName = "0.1.6"
+        versionCode = 8
+        versionName = "0.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         resConfigs("en", "es")
@@ -49,7 +49,7 @@ android {
     }
 
     lint {
-        checkReleaseBuilds = false
+        checkReleaseBuilds = true
         abortOnError = true
     }
 
@@ -58,9 +58,6 @@ android {
         includeInBundle = false
     }
 
-    buildFeatures {
-        viewBinding = true
-    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -74,16 +71,7 @@ android {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
-    implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.recyclerview)
-    implementation(libs.androidx.dynamicanimation)
-    implementation(libs.glide)
-    implementation("com.github.skydoves:colorpickerview:2.3.0")
-    implementation("org.lsposed.hiddenapibypass:hiddenapibypass:4.3")
-    implementation("dev.rikka.shizuku:api:12.1.0")
-    implementation("dev.rikka.shizuku:provider:12.1.0")
 
     testImplementation(libs.junit)
     testImplementation("org.json:json:20250517")
