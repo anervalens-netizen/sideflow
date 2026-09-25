@@ -302,17 +302,24 @@ class FloatingPanelService : Service() {
         transition.incrementAndGet()
         try {
             val newlyAttached = !panelAttached
+            val travel = SidebarStyle.dp(this, SidebarStyle.WIDTH_DP).toFloat()
+            panel.animate().cancel()
             if (newlyAttached) {
+                // Prime the reused root before attaching it so neither a stale transparent
+                // close state nor the first unshifted frame can flash on screen.
+                panel.translationX = travel
+                panel.alpha = 1f
                 windows.addView(panel, panelParams())
                 panelAttached = true
-                panel.translationX = SidebarStyle.dp(this, SidebarStyle.WIDTH_DP).toFloat()
-            } else windows.updateViewLayout(panel, panelParams())
+            } else {
+                panel.alpha = 1f
+                windows.updateViewLayout(panel, panelParams())
+            }
             panel.requestFocus()
             if (Build.VERSION.SDK_INT >= 33) panel.post {
                 if (panelAttached && backHandler == null) backHandler = BackHandlerApi33.attach(panel) { closePanel() }
             }
-            panel.animate().cancel()
-            panel.animate().translationX(0f)
+            panel.animate().translationX(0f).alpha(1f)
                 .setDuration(if (animationsEnabled()) SidebarStyle.ANIMATION_MS else 0L).start()
         } catch (failure: RuntimeException) {
             RuntimeState(this).setError("Overlay failed: ${failure.javaClass.simpleName}")
@@ -323,15 +330,24 @@ class FloatingPanelService : Service() {
     private fun closePanel() {
         if (!panelAttached) return
         val request = transition.incrementAndGet()
+        val travel = SidebarStyle.dp(this, SidebarStyle.WIDTH_DP).toFloat()
         panel.animate().cancel()
-        panel.animate().translationX(panel.width.toFloat())
+        panel.animate().translationX(travel).alpha(0f)
             .setDuration(if (animationsEnabled()) SidebarStyle.ANIMATION_MS else 0L)
             .withEndAction {
                 if (request == transition.get() && panelAttached) {
-                    if (Build.VERSION.SDK_INT >= 33) backHandler?.unregister()
-                    backHandler = null
-                    try { windows.removeView(panel) } catch (_: RuntimeException) { }
-                    panelAttached = false
+                    // Commit one fully transparent frame before destroying the overlay surface.
+                    // OxygenOS can otherwise briefly composite the root at its old transform while
+                    // WindowManager tears the surface down, producing a visible close flicker.
+                    panel.alpha = 0f
+                    panel.postOnAnimation {
+                        if (request == transition.get() && panelAttached) {
+                            if (Build.VERSION.SDK_INT >= 33) backHandler?.unregister()
+                            backHandler = null
+                            try { windows.removeView(panel) } catch (_: RuntimeException) { }
+                            panelAttached = false
+                        }
+                    }
                 }
             }.start()
     }
