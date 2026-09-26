@@ -119,9 +119,12 @@ class FloatingPanelService : Service() {
             return START_NOT_STICKY
         }
         if (isRunning) {
-            if (intent?.action == ACTION_REFRESH) ShelfRuntime.peek(this)?.let {
-                shelf = it
-                grid.show(it)
+            if (intent?.action == ACTION_REFRESH) {
+                ShelfRuntime.peek(this)?.let {
+                    shelf = it
+                    grid.show(it)
+                }
+                refreshGeometry(force = true)
             }
             return START_STICKY
         }
@@ -202,6 +205,7 @@ class FloatingPanelService : Service() {
             }
             addView(grid)
         }
+        val handlePrefs = HandlePreferences(this)
         handle = FrameLayout(this).apply {
             contentDescription = getString(R.string.open_sidebar)
             addView(View(this@FloatingPanelService).apply {
@@ -210,7 +214,7 @@ class FloatingPanelService : Service() {
                     cornerRadius = SidebarStyle.dp(this@FloatingPanelService, 3).toFloat()
                 }
             }, FrameLayout.LayoutParams(SidebarStyle.dp(this@FloatingPanelService, SidebarStyle.HANDLE_STRIPE_WIDTH_DP),
-                SidebarStyle.dp(this@FloatingPanelService, SidebarStyle.HANDLE_HEIGHT_DP), Gravity.RIGHT or Gravity.CENTER_VERTICAL))
+                SidebarStyle.dp(this@FloatingPanelService, handlePrefs.heightDp), Gravity.RIGHT or Gravity.CENTER_VERTICAL))
             setOnClickListener { openPanel() }
             setOnTouchListener(object : View.OnTouchListener {
                 var downX = 0f
@@ -264,15 +268,16 @@ class FloatingPanelService : Service() {
 
     private fun handleParams(): WindowManager.LayoutParams {
         val available = space()
+        val prefs = HandlePreferences(this)
         val size = SidebarStyle.dimensions(available.width, available.height,
             SidebarStyle.dp(this, SidebarStyle.HANDLE_TOUCH_WIDTH_DP),
-            SidebarStyle.dp(this, SidebarStyle.HANDLE_HEIGHT_DP))
+            SidebarStyle.dp(this, prefs.heightDp))
         return WindowManager.LayoutParams(size.first, size.second, WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
             PixelFormat.TRANSLUCENT).apply {
             gravity = Gravity.RIGHT or Gravity.CENTER_VERTICAL
             y = SidebarStyle.handleOffset(available.height, size.second,
-                SidebarStyle.dp(this@FloatingPanelService, SidebarStyle.HANDLE_OFFSET_DP))
+                SidebarStyle.dp(this@FloatingPanelService, prefs.offsetDp))
         }
     }
 
@@ -357,7 +362,15 @@ class FloatingPanelService : Service() {
         if (!force && now == lastSpace) return
         lastSpace = now
         try {
-            if (handleAttached) windows.updateViewLayout(handle, handleParams())
+            if (handleAttached) {
+                val visual = handle.getChildAt(0)
+                if (visual != null) {
+                    visual.layoutParams = (visual.layoutParams as FrameLayout.LayoutParams).apply {
+                        height = SidebarStyle.dp(this@FloatingPanelService, HandlePreferences(this@FloatingPanelService).heightDp)
+                    }
+                }
+                windows.updateViewLayout(handle, handleParams())
+            }
             if (panelAttached) windows.updateViewLayout(panel, panelParams())
         } catch (failure: RuntimeException) {
             RuntimeState(this).setError("Overlay geometry failed: ${failure.javaClass.simpleName}")

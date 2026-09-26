@@ -17,6 +17,10 @@
     <string name="stop_failed">Could not save Stop</string>
     <string name="allow_overlay">Allow display over other apps</string>
     <string name="allow_notification">Allow status notification (optional)</string>
+    <string name="handle_settings">Handle</string>
+    <string name="handle_size">Handle size</string>
+    <string name="handle_position">Vertical position</string>
+    <string name="handle_touch_area_note">Touch depth into the screen: %1$ddp</string>
     <string name="add_app">Add app</string>
     <string name="remove">Remove</string>
     <string name="remove_description">Remove %1$s from %2$s</string>
