@@ -280,12 +280,18 @@ class MainActivity : Activity() {
             progress = value.coerceIn(min, max) - min
             setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 private var pending = value
+                private var trackingTouch = false
                 override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                     pending = min + progress
                     valueLabel.text = "$label: ${pending}dp"
+                    // Hardware-key and accessibility changes do not get onStopTrackingTouch.
+                    if (fromUser && !trackingTouch) changed(pending)
                 }
-                override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
-                override fun onStopTrackingTouch(seekBar: SeekBar?) { changed(pending) }
+                override fun onStartTrackingTouch(seekBar: SeekBar?) { trackingTouch = true }
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                    trackingTouch = false
+                    changed(pending)
+                }
             })
         }
         root.addView(valueLabel)
