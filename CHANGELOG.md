@@ -1,3 +1,9 @@
+### v0.2.2
+- Reduced the edge handle touch depth from 30dp to 16dp to avoid accidental activation while typing.
+- Restored minimal Handle controls for height and vertical position without bringing back the retired settings surface.
+
+---
+
 # Project History & Milestones 📜
 
 **Project Persona**: Smart Edge: Sidebar & Gestures — Floating overlay service launcher

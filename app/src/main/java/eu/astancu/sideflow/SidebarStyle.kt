@@ -8,10 +8,14 @@ object SidebarStyle {
     const val WIDTH_DP = 180
     const val MAX_HEIGHT_DP = 700
     const val RIGHT_MARGIN_DP = 4
-    const val HANDLE_TOUCH_WIDTH_DP = 30
+    const val HANDLE_TOUCH_WIDTH_DP = 16
     const val HANDLE_STRIPE_WIDTH_DP = 4
     const val HANDLE_HEIGHT_DP = 115
     const val HANDLE_OFFSET_DP = 214
+    const val HANDLE_HEIGHT_MIN_DP = 48
+    const val HANDLE_HEIGHT_MAX_DP = 200
+    const val HANDLE_OFFSET_MIN_DP = -500
+    const val HANDLE_OFFSET_MAX_DP = 500
     const val ICON_DP = 44
     const val CELL_MIN_HEIGHT_DP = 64
     const val HEADER_HEIGHT_DP = 24
@@ -24,6 +28,8 @@ object SidebarStyle {
     fun dp(context: Context, value: Int): Int = (context.resources.displayMetrics.density * value + .5f).toInt()
     fun dimensions(width: Int, height: Int, desiredWidth: Int, desiredHeight: Int): Pair<Int, Int> =
         min(max(1, width), max(1, desiredWidth)) to min(max(1, height), max(1, desiredHeight))
+    fun handleHeight(value: Int): Int = value.coerceIn(HANDLE_HEIGHT_MIN_DP, HANDLE_HEIGHT_MAX_DP)
+    fun desiredHandleOffset(value: Int): Int = value.coerceIn(HANDLE_OFFSET_MIN_DP, HANDLE_OFFSET_MAX_DP)
     fun handleOffset(availableHeight: Int, handleHeight: Int, desiredOffset: Int): Int {
         val maxOffset = ((availableHeight - handleHeight) / 2).coerceAtLeast(0)
         return desiredOffset.coerceIn(-maxOffset, maxOffset)

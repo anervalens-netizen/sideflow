@@ -21,6 +21,11 @@ class RuntimeAndGeometryTest {
         assertEquals(0, SidebarStyle.handleOffset(20, 115, 214))
         assertEquals(50, SidebarStyle.handleOffset(200, 100, 214))
         assertEquals(-50, SidebarStyle.handleOffset(200, 100, -214))
+        assertEquals(48, SidebarStyle.handleHeight(-99))
+        assertEquals(200, SidebarStyle.handleHeight(999))
+        assertEquals(-500, SidebarStyle.desiredHandleOffset(-999))
+        assertEquals(500, SidebarStyle.desiredHandleOffset(999))
+        assertEquals(16, SidebarStyle.HANDLE_TOUCH_WIDTH_DP)
     }
     @Test fun slowIconSurvivesCloseReopenButNotPackageChange() {
         val policy = IconRequestPolicy()

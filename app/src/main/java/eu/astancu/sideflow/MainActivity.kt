@@ -17,6 +17,7 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ListView
 import android.widget.ScrollView
+import android.widget.SeekBar
 import android.widget.TextView
 import android.app.Activity
 import java.util.concurrent.Executors
@@ -112,6 +113,28 @@ class MainActivity : Activity() {
             if (state.setEnabled(true)) ServiceControl.start(this)
             render()
         }
+        heading(getString(R.string.handle_settings))
+        val handlePrefs = HandlePreferences(this)
+        slider(
+            getString(R.string.handle_size),
+            SidebarStyle.HANDLE_HEIGHT_MIN_DP,
+            SidebarStyle.HANDLE_HEIGHT_MAX_DP,
+            handlePrefs.heightDp
+        ) { value ->
+            handlePrefs.heightDp = value
+            refreshHandle()
+        }
+        slider(
+            getString(R.string.handle_position),
+            SidebarStyle.HANDLE_OFFSET_MIN_DP,
+            SidebarStyle.HANDLE_OFFSET_MAX_DP,
+            handlePrefs.offsetDp
+        ) { value ->
+            handlePrefs.offsetDp = value
+            refreshHandle()
+        }
+        info(getString(R.string.handle_touch_area_note, SidebarStyle.HANDLE_TOUCH_WIDTH_DP))
+
         loadError?.let {
             info(getString(R.string.shelf_needs_attention, it))
             button(getString(R.string.retry_load)) { load() }
@@ -245,6 +268,44 @@ class MainActivity : Activity() {
             setOnClickListener { click() }
         })
     }
+
+    private fun slider(label: String, min: Int, max: Int, value: Int, changed: (Int) -> Unit) {
+        val valueLabel = TextView(this).apply {
+            text = "$label: ${value}dp"
+            textSize = 14f
+            setPadding(0, dp(6), 0, 0)
+        }
+        val control = SeekBar(this).apply {
+            contentDescription = label
+            this.max = max - min
+            progress = value.coerceIn(min, max) - min
+            setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                private var pending = value
+                private var trackingTouch = false
+                override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                    pending = min + progress
+                    valueLabel.text = "$label: ${pending}dp"
+                    // Hardware-key and accessibility changes do not get onStopTrackingTouch.
+                    if (fromUser && !trackingTouch) changed(pending)
+                }
+                override fun onStartTrackingTouch(seekBar: SeekBar?) { trackingTouch = true }
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                    trackingTouch = false
+                    changed(pending)
+                }
+            })
+        }
+        root.addView(valueLabel)
+        root.addView(control, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+    }
+
+    private fun refreshHandle() {
+        if (!FloatingPanelService.isRunning) return
+        runCatching {
+            startService(Intent(this, FloatingPanelService::class.java).setAction(FloatingPanelService.ACTION_REFRESH))
+        }
+    }
+
     private fun dp(value: Int) = SidebarStyle.dp(this, value)
     override fun onDestroy() {
         alive = false
