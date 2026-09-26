@@ -276,6 +276,7 @@ class MainActivity : Activity() {
             setPadding(0, dp(6), 0, 0)
         }
         val control = SeekBar(this).apply {
+            contentDescription = label
             this.max = max - min
             progress = value.coerceIn(min, max) - min
             setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
