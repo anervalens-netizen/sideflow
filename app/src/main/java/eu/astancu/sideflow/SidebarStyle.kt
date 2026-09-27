@@ -16,8 +16,8 @@ object SidebarStyle {
     const val HANDLE_HEIGHT_MAX_DP = 200
     const val HANDLE_OFFSET_MIN_DP = -500
     const val HANDLE_OFFSET_MAX_DP = 500
-    const val ICON_DP = 44
-    const val CELL_MIN_HEIGHT_DP = 64
+    const val ICON_DP = 56
+    const val CELL_MIN_HEIGHT_DP = 72
     const val HEADER_HEIGHT_DP = 24
     const val SECTION_GAP_DP = 5
     const val CELL_GAP_DP = 2

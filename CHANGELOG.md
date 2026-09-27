@@ -1,3 +1,7 @@
+### v0.2.3
+- Increased sidebar shortcut icons from 44dp to 56dp and the minimum shortcut cell height from 64dp to 72dp for easier tapping.
+- Kept the sidebar outer geometry unchanged at 180dp wide and at most 700dp high.
+
 ### v0.2.2
 - Reduced the edge handle touch depth from 30dp to 16dp to avoid accidental activation while typing.
 - Restored minimal Handle controls for height and vertical position without bringing back the retired settings surface.
