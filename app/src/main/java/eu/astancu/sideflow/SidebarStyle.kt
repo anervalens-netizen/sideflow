@@ -6,7 +6,7 @@ import kotlin.math.min
 
 object SidebarStyle {
     const val WIDTH_DP = 180
-    const val MAX_HEIGHT_DP = 700
+    const val MAX_HEIGHT_DP = 760
     const val RIGHT_MARGIN_DP = 4
     const val HANDLE_TOUCH_WIDTH_DP = 16
     const val HANDLE_STRIPE_WIDTH_DP = 4
@@ -17,7 +17,7 @@ object SidebarStyle {
     const val HANDLE_OFFSET_MIN_DP = -500
     const val HANDLE_OFFSET_MAX_DP = 500
     const val ICON_DP = 56
-    const val CELL_MIN_HEIGHT_DP = 72
+    const val CELL_MIN_HEIGHT_DP = 80
     const val HEADER_HEIGHT_DP = 24
     const val SECTION_GAP_DP = 5
     const val CELL_GAP_DP = 2

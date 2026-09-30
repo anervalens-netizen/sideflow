@@ -16,8 +16,8 @@ class RuntimeAndGeometryTest {
         assertFalse(RecoveryPolicy.newBoot(true, true, 4, 3, false))
     }
     @Test fun geometryClampsExtremeViewportWithoutInvalidRange() {
-        assertEquals(1 to 1, SidebarStyle.dimensions(0, 0, 180, 700))
-        assertEquals(80 to 20, SidebarStyle.dimensions(80, 20, 180, 700))
+        assertEquals(1 to 1, SidebarStyle.dimensions(0, 0, 180, 760))
+        assertEquals(80 to 20, SidebarStyle.dimensions(80, 20, 180, 760))
         assertEquals(0, SidebarStyle.handleOffset(20, 115, 214))
         assertEquals(50, SidebarStyle.handleOffset(200, 100, 214))
         assertEquals(-50, SidebarStyle.handleOffset(200, 100, -214))
@@ -27,7 +27,7 @@ class RuntimeAndGeometryTest {
         assertEquals(500, SidebarStyle.desiredHandleOffset(999))
         assertEquals(16, SidebarStyle.HANDLE_TOUCH_WIDTH_DP)
         assertEquals(56, SidebarStyle.ICON_DP)
-        assertEquals(72, SidebarStyle.CELL_MIN_HEIGHT_DP)
+        assertEquals(80, SidebarStyle.CELL_MIN_HEIGHT_DP)
     }
     @Test fun slowIconSurvivesCloseReopenButNotPackageChange() {
         val policy = IconRequestPolicy()
