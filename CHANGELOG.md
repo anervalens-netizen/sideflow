@@ -1,6 +1,14 @@
+### v0.2.4
+- Increased the maximum sidebar height from 700dp to 760dp for more vertical space.
+- Kept the accepted 180dp width, two-column layout, and existing shortcuts unchanged.
+
+---
+
 ### v0.2.3
 - Increased sidebar shortcut icons from 44dp to 56dp and the minimum shortcut cell height from 64dp to 72dp for easier tapping.
 - Kept the sidebar outer geometry unchanged at 180dp wide and at most 700dp high.
+
+---
 
 ### v0.2.2
 - Reduced the edge handle touch depth from 30dp to 16dp to avoid accidental activation while typing.
