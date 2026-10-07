@@ -1,4 +1,5 @@
 ### v0.2.4
+- Increased the minimum shortcut cell height from 72dp to 80dp for easier tapping.
 - Increased the maximum sidebar height from 700dp to 760dp for more vertical space.
 - Kept the accepted 180dp width, two-column layout, and existing shortcuts unchanged.
 
