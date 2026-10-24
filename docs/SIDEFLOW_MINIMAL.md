@@ -1,4 +1,4 @@
-# SideFlow Minimal 0.2.2
+# SideFlow Minimal 0.2.4
 
 ## Architecture
 
@@ -6,7 +6,7 @@ One Android module uses Kotlin Views and RecyclerView. `MainActivity` is the sma
 
 `LauncherRepository` queries launchable apps only when Add opens. Normal sidebar opening attaches the existing panel; it does not rebind the grid, scan packages, or read shelf files. Icon work can finish while the panel is hidden. Selected icons render off the main thread at display size into an 8MiB byte-weighted cache. Package broadcasts invalidate only selected targets. App launch uses the package's launcher intent, including WebAPK packages. Missing apps stay in the shelf with a placeholder and a tap message. No notification listener, polling, alarms, or broad package query is used.
 
-`RuntimeState` records durable user enablement and a boot marker. Stop saves false before removing the service. Same-boot recovery can use the retained legacy-named accessibility component, which does not retrieve window content or act on events. A new boot requires legacy `auto_start` (default true) and enabled state. The manager exposes a Retry button when enabled but the service is absent. A successful overlay creation records the current boot marker so subsequent same-boot process recovery is possible. The old `toggle_sidebar` shortcut is disabled once because its target activity was removed. Accessibility retention was observed during the actual in-place update. The complete OxygenOS Clear-All/reboot matrix remains open in issue #10.
+`RuntimeState` records durable user enablement and a boot marker. Stop saves false before removing the service. Same-boot recovery can use the retained legacy-named accessibility component, which does not retrieve window content or act on events. A new boot requires legacy `auto_start` (default true) and enabled state. The manager exposes a Retry button when enabled but the service is absent. A successful overlay creation records the current boot marker so subsequent same-boot process recovery is possible. The old `toggle_sidebar` shortcut is disabled once because its target activity was removed. Accessibility retention was observed during the actual in-place update. The complete OxygenOS Clear-All/reboot matrix was not executed. Issue #10 closed on owner acceptance on 15 October; that closure does not certify the unexecuted matrix.
 
 ## Shelf migration and recovery
 
@@ -14,7 +14,7 @@ One Android module uses Kotlin Views and RecyclerView. `MainActivity` is the sma
 
 The minimal store uses `AtomicFile` for current and last-known-good copies. The good copy is written before the first primary write. Later edits save the prior validated snapshot as good before replacing current. Pending AtomicFile `.bak` files count as recoverable state; migration never reseeds over damaged minimal data. File operations and edits share one serialized worker. Editor callbacks ignore destroyed or superseded activities. The legacy preference file is never rewritten by the minimal implementation. Local copies do not survive uninstall or data wipe.
 
-Rollback requires a previous code build with a higher versionCode and the same signing certificate; the existing recovery code9 cannot normally replace installed 0.2.1/code10 in place. The version 1 preferences remain for that path. Back up device data before changing installed builds.
+Rollback requires a recovery build with a higher versionCode than the then-installed build and the same signing certificate. Private recovery code14 was rehearsed against minimal code13 on API35; it remains emergency-only and was not installed on the physical phone. Freshly check the installed version/signature and back up device data before using it. Returning from recovery14 requires minimal code above14. See [rollback prerequisites](ROLLBACK.md). The version 1 preferences remain preserved for that path.
 
 ## Removed capabilities
 
@@ -26,6 +26,8 @@ Run `testDebugUnitTest assembleDebug assembleRelease assembleDebugAndroidTest li
 
 Current lint warnings are triaged as retained target 34 compatibility, inherited launcher icon assets, intentional fixed right edge, code-only custom view construction, and full RecyclerView refresh on actual shelf replacement. No error category is suppressed.
 
-Owner delivery on 25 September: matching installed/candidate certificate verified, in-place 0.1.6/code7 -> 0.2.0/code8 -> 0.2.1/code10 installed, four sections/18 targets preserved, Accessibility and overlay retained, foreground runtime active. Actual opening and outside-close were inspected; after the close-flicker fix the owner responded "ok" and authorized closeout. The installed artifact is debug-signed with the original certificate, not a signed R8 release.
+Historical owner delivery on 25 September: matching installed/candidate certificate verified, in-place 0.1.6/code7 -> 0.2.0/code8 -> 0.2.1/code10 installed, four sections/18 targets preserved, Accessibility and overlay retained, foreground runtime active. Actual opening and outside-close were inspected; after the close-flicker fix the owner responded "ok" and authorized closeout. That September artifact was the debug variant signed with the original certificate.
 
-Issue #10 retains unfinished qualification: every target launch, the complete rapid-cycle/edit/Back/rotation/IME/font/revocation/recovery/Clear-All/reboot matrix on OnePlus, signed R8 delivery and a recovery artifact whose version/signature can replace the then-installed build. Measure frame timing, memory and battery under matched conditions. Tests on emulators and source/APK-size reductions are not substitutes for those measurements. No further phone action was required for this documentation closeout.
+On 15 October, the same-certificate signed R8 release 0.2.4/code13 was installed in place and accepted by the owner. Four sections/16 current shortcuts, overlay, Accessibility and foreground state were retained; repeated opening/closing, appearance and a FieldOps launch were accepted. Issue #10 closed on that acceptance. The [dated delivery record](DELIVERY_20261015.md) identifies the exact accepted source and APK.
+
+Every other target launch and the complete rapid-cycle/edit/Back/rotation/IME/font/revocation/recovery/Clear-All/reboot matrix were not executed in full. Matched frame timing, memory and idle-battery measurements were not completed. Tests on emulators and source/APK-size reductions are not substitutes for those measurements. No new physical-device action was performed for this documentation reconciliation.
